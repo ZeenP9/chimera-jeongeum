@@ -340,10 +340,12 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
         let c = if l == 'ᄀ' { "g" } else { "b" };
         return Some(Syllable { text: w.text.clone(), onset: vec![Segment::new(c)], nucleus: Segment::new("ʉ"), coda: cd, ..Default::default() });
     }
-    // ᄇ + 붙은 ㅡ결합모음 (ᄇힹ 븨 ᄇힻ ᄇힼ) = 유성 [b] + 남은 모음: ㅂ 에는 목젖 짝이 없어 ㅡ 는 유성 표지로만 읽는다
-    // (일본어 ば び べ ぼ 를 이렇게 적어도 [b], 사용자 지정). 떨어진 ㅡ(ᄇ+ᅳ+ᅡ)와 같은 소리
+    // ᄇ + 붙은 ㅡ결합모음 (ᄇힹ ᄇힻ ᄇힼ) = 유성 [b] + 남은 모음: ㅂ 에는 목젖 짝이 없어 ㅡ 는 유성 표지로만 읽는다
+    // (일본어 ば べ ぼ 를 이렇게 적어도 [b], 사용자 지정). 떨어진 ㅡ(ᄇ+ᅳ+ᅡ)와 같은 소리.
+    // び 는 떨어진 [브+ㅣ](ᄇ+ᅳ+ᅵ)로 적는다 — 붙은 ᄇ+ㅢ 는 다른 소리라 이 규칙에서 뺀다 (사용자 지정)
     if w.lead == Some('ᄇ')
         && let [first, rest @ ..] = w.vowel.as_slice()
+        && *first != 'ᅴ'
         && let Some(base) = eu_base(*first)
     {
         let mut v = vec![base];
