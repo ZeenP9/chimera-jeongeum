@@ -330,9 +330,11 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
         return Some(Syllable { text: w.text.clone(), onset: on, nucleus: Segment::new(nucleus), coda: cd, ..Default::default() });
     }
     // ㄲ ㄱ ㅋ ㅎ + ㅡ 결합 모음 (ᄁힹ = [qa]): ㅡ는 자음에 흡수되어 목젖 자음 q ɢ qʰ χ 가 되고 나머지 모음이 남는다.
-    //   ힹ→ㅏ ힺ→ㅓ ힻ→ㅔ ힼ→ㅗ ᆕ→ㅜ ㅢ→ㅣ. ㅡ 단독(그 끄)은 목젖 규칙을 받지 않는다 (그 = [kɯ]).
+    //   ힹ→ㅏ ힺ→ㅓ ힻ→ㅔ ힼ→ㅗ ㅢ→ㅣ. ㅡ 단독(그 끄)과 ᆕ(= ʉ)는 목젖 규칙을 받지 않는다 (그 = [kɯ], ᄀᆕ = [kʉ]).
+    // ᆕ(ㅡ+ㅜ = ʉ)는 예외: 그 자체가 모음 [ʉ]라 목젖음 규칙을 받지 않는다 (ᄀᆕ ᄏᆕ ᄒᆕ = 일본어 ぐ く ふ, 사용자 지정)
     if let Some(l @ ('ᄁ' | 'ᄀ' | 'ᄏ' | 'ᄒ')) = w.lead
         && let [first, rest @ ..] = w.vowel.as_slice()
+        && *first != 'ᆕ'
         && let Some(base) = eu_base(*first)
     {
         let mut v = vec![base];
