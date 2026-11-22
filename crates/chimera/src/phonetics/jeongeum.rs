@@ -259,9 +259,33 @@ fn eu_base(c: char) -> Option<char> {
 
 /// 받침 ㆁ(ᇰ)은 자음이 아니라 앞 모음을 비모음으로 만든다 (프랑스어 비모음: 모음 + 받침 ㆁ). 현대 한글의
 /// 받침 ㅇ(ᆼ)은 [ŋ].
+/// 프랑스어 비모음은 모음 + 받침 ㆁ 으로 적되, 모음 글자는 비모음의 소리에 맞춰 고른다 (사용자 지정):
+///   ᅟힺᇰ [ã] · ᅟᅡᇰ [ɛ̃](북부) / ᅟᅢᇰ [ɛ̃](남부) · ᅟᅩᇰ [ɔ̃] · ᅟᆟᇰ [œ̃] · ᅟᅪᇰ [wɛ̃].
+/// 그 밖의 모음 + ㆁ 은 그 모음을 그대로 콧소리로 낸다.
+fn nasal_vowel(v: &[char]) -> Option<(char, &'static str)> {
+    // (자음 규칙을 받지 않을 대리 모음 글자, 비모음의 바탕 모음)
+    Some(match v {
+        ['ힺ'] => ('ᅡ', "a"), // ㅡ결합이지만 목젖음 규칙(ᄏힺ = qʰ)을 받지 않는다: 프랑스어 quand [kã]
+        ['ᅡ'] => ('ᅡ', "ɛ"),
+        ['ᅢ'] => ('ᅢ', "ɛ"),
+        ['ᅩ'] => ('ᅩ', "ɔ"),
+        ['ᆟ'] => ('ᅩ', "œ"),
+        ['ᅪ'] => ('ᅪ', "ɛ"),
+        _ => return None,
+    })
+}
+
 fn syllable(w: &Written) -> Option<Syllable> {
-    let mut s = syllable_oral(w)?;
-    if w.tail.contains(&'ᇰ') {
+    let nasal = w.tail.contains(&'ᇰ');
+    let french = if nasal { nasal_vowel(&w.vowel) } else { None };
+    let mut s = match french {
+        Some((proxy, _)) => syllable_oral(&Written { text: w.text.clone(), lead: w.lead, vowel: vec![proxy], tail: w.tail.clone() })?,
+        None => syllable_oral(w)?,
+    };
+    if let Some((_, v)) = french {
+        s.nucleus.ipa = v.to_string();
+    }
+    if nasal {
         s.nucleus.nasalized = Some(true);
     }
     Some(s)
