@@ -573,6 +573,14 @@ impl FrontEnd for JeongeumHan<'_> {
                 i += 1;
             }
             let Some(py) = pys.get(i) else { break };
+            // 嗯: 사전은 옛 표기 n2 로 읽지만 현대 표준(《现代汉语词典》)은 ng (ńg ňg ǹg)
+            let std_py;
+            let py = if py.trim_end_matches(|c: char| c.is_ascii_digit()) == "n" {
+                std_py = format!("ng{}", &py[1..]);
+                &std_py
+            } else {
+                py
+            };
             let n = s.text.chars().count();
             let tone = py.chars().last().and_then(|c| c.to_digit(10)).unwrap_or(5) as u8;
             let spelling = pinyin_to_jeongeum(py).unwrap_or("");

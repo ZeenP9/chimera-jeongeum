@@ -11,6 +11,7 @@ pub mod english;
 pub mod inventory;
 pub mod ipa;
 pub mod jeongeum;
+pub mod jeongeum_kana;
 pub mod korean;
 pub mod mandarin;
 pub mod planner;

@@ -14,6 +14,7 @@
 use crate::anatomy::human::BodyMix;
 use super::english::js_is_space;
 use super::jeongeum::{Jeongeum, JeongeumHan};
+use super::jeongeum_kana::{JeongeumKana, is_kana};
 use super::korean::Korean;
 use super::mandarin::{Mandarin, MandarinLexicon, Pinyin};
 use super::russian::Russian;
@@ -343,8 +344,12 @@ pub enum Lang {
 /// characters are skipped). The one list the app, the wasm engine and the CLI all read lyrics
 /// through, so a new front end can't be missing from one of them.
 pub fn lyrics_in(text: &str, g2p: &impl WordSource, zh: &MandarinLexicon, lang: Lang) -> Vec<Syllable> {
+    // 正音: 가나가 섞인 가사는 일본어로 읽는다. 그 속의 한자는 일본어 독음이 필요한데 사전이 아직 없어,
+    // 중국어로 잘못 읽지 않도록 건너뛴다 (빈 사전)
+    let no_han = MandarinLexicon::new();
+    let zh = if text.chars().any(is_kana) { &no_han } else { zh };
     match lang {
-        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Jeongeum, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
-        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Jeongeum, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
+        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Jeongeum, &JeongeumKana, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
+        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Jeongeum, &JeongeumKana, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
     }
 }
