@@ -47,3 +47,18 @@ fn jamo(s: &str) -> String {
         })
         .collect()
 }
+
+#[test]
+fn the_vowel_chart_matches_the_users_table() {
+    // 사용자 지정 2026-11-23: 모음사각도의 IPA 모음과 正音 모음
+    for (typed, vowel) in [
+        ("ᅟᆚ", "ø"), ("ᅟᆛ", "y"), ("ㆉ", "œ"), ("ᅟᆟ", "ɔ"), ("ᅟᆗ", "ʊ"), ("ᅙᅵ", "ɪ"), ("ᅟᅵᇹ", "ɪ"),
+        ("ᅟힺ", "ɘ"), ("에", "e̞"), ("이", "i"), ("ᅙᅦ", "e"), ("애", "ɛ"), ("아", "ɐ"), ("ᅟퟅ", "ɑ"), ("ᅙᆞ", "ə"),
+    ] {
+        let s = read(typed);
+        assert_eq!(s.len(), 1, "{typed}");
+        // ㆆ marks the vowel here: no [ʔ] before or after it
+        assert!(s[0].1.is_empty(), "{typed}: {:?}", s[0].1);
+        assert_eq!(s[0].2, vowel, "{typed}");
+    }
+}

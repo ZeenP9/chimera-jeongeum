@@ -66,11 +66,30 @@ fn jamo(word: &str) -> Vec<char> {
         } else if let Some(l) = compat_lead(c) {
             // 호환 자모 낱자 (ㅸ ㄱ, 자판으로 치면 나오는 꼴): 초성으로
             out.push(l);
+        } else if let Some(v) = compat_vowel(c) {
+            // 호환 자모 모음 (ㆉ ㆍ ㅏ): 중성으로
+            out.push(v);
         } else {
             out.push(c);
         }
     }
     out
+}
+
+/// 호환 자모 모음 → 중성 자모 (ㅏ…ㅣ, 옛 모음 ㆇ ㆈ ㆉ ㆊ ㆋ ㆌ ㆍ ㆎ)
+fn compat_vowel(c: char) -> Option<char> {
+    match c {
+        'ㅏ'..='ㅣ' => char::from_u32(c as u32 - 0x314F + 0x1161),
+        'ㆇ' => Some('ᆄ'),
+        'ㆈ' => Some('ᆅ'),
+        'ㆉ' => Some('ᆈ'),
+        'ㆊ' => Some('ᆑ'),
+        'ㆋ' => Some('ᆒ'),
+        'ㆌ' => Some('ᆔ'),
+        'ㆍ' => Some('ᆞ'),
+        'ㆎ' => Some('ᆡ'),
+        _ => None,
+    }
 }
 
 /// 호환 자모 자음 → 초성 자모 (겹받침 꼴 ㄳ ㄵ … 은 초성이 없어 제외)
@@ -199,16 +218,16 @@ fn vowel(v: &[char], son: bool) -> Option<(&'static str, &'static str)> {
     let eu = if son { "ɤ̠" } else { "ɯ̠" };
     let arae = if son { "ɑ̠" } else { "ə" };
     Some(match v {
-        ['ᅡ'] => ("", "a"),
+        ['ᅡ'] => ("", "ɐ"),   // [ɐ] (사용자 지정 2026-11-23, 모음사각도 매칭)
         ['ᅢ'] => ("", "ɛ"),
-        ['ᅣ'] => ("j", "a"),
+        ['ᅣ'] => ("j", "ɐ"),
         ['ᅤ'] => ("j", "ɛ"),
         ['ᅥ'] => ("", eo),
         ['ᅦ'] => ("", "e̞"),
         ['ᅧ'] => ("j", eo),
         ['ᅨ'] => ("j", "e̞"),
         ['ᅩ'] => ("", "o̞"),
-        ['ᅪ'] => ("w", "a"),
+        ['ᅪ'] => ("w", "ɐ"),
         ['ᅫ'] => ("w", "ɛ"),
         ['ᅬ'] => ("", "ø̞"),
         ['ᅭ'] => ("j", "o̞"),
@@ -224,16 +243,19 @@ fn vowel(v: &[char], son: bool) -> Option<(&'static str, &'static str)> {
         ['\u{11A1}'] => ("", "ɑɪ"), // ㆎ (ㆍ+ㅣ): [ɑɪ] (사용자 지정)
         ['ᆜ'] => ("", "i"),   // ㅣ→ㅡ: 숨 섞인 개방 + ㅣ (ᄃᆜ dʱi), ᅙᆜ 는 ɨ — `syllable`
         ['ᅼ'] => ("", "ɐ"),   // ㅓ→ㅡ: 산스크리트 내재모음 a + 숨 (ᄀᅼ gʱɐ, ᄃᅼ dʱɐ, ᄇᅼ bʱɐ, ᄌᅼ dʑʱɐ)
-        ['ᆣ'] => ("", "a"),   // ㅏ→ㅡ: ā + 숨 (ᄃᆣ dʱa)
+        ['ᆣ'] => ("", "ɐ"),   // ㅏ→ㅡ: ā + 숨 (ᄃᆣ dʱa)
         ['ᆖ'] => ("", "u"),   // ㅜ→ㅡ: u + 숨 (ᄇᆖ bʱu)
         ['ᆕ'] => ("", "ʉ"),   // ㅡ+ㅜ
         ['ힼ'] => ("", "ɵ"),   // ㅡ+ㅗ
         ['ᆐ'] => ("", "yɛ"),  // ㅠ+ㅔ (jue4 ᄌᆐ)
         ['ᆛ'] => ("", "y"),   // ㅣ+ㅜ: ü
         ['ᆟ'] => ("", "ɔ"),   // ㆍ+ㅓ: pinyin o, ou
-        ['ᆗ'] => ("", "u̠"),  // ㅢ+ㅜ: after zh ch sh (ʊ)
+        ['ᆗ'] => ("", "ʊ"),   // ㅢ+ㅜ: [ʊ] (사용자 지정 2026-11-23)
         ['ힹ'] => ("", "ɨa"),  // ㅡ+ㅏ: the 3rd tone's glide
-        ['ힺ'] => ("", "ɨə"),  // ㅡ+ㅓ
+        ['ힺ'] => ("", "ɘ"),   // ㅡ+ㅓ: 중설 반폐 [ɘ] (사용자 지정 2026-11-23)
+        ['ᆚ'] => ("", "ø"),   // ㅣ+ㅗ: [ø] (사용자 지정)
+        ['ᆈ'] => ("", "œ"),   // ㆉ ㅛ+ㅣ: [œ] (사용자 지정)
+        ['\u{D7C5}'] => ("", "ɑ"), // ㆍ+ㅏ: [ɑ] (사용자 지정)
         ['ힻ'] => ("", "ɨe"),  // ㅡ+ㅔ
         _ => return None,
     })
@@ -308,6 +330,29 @@ fn nasal_vowel(v: &[char]) -> Option<(char, &'static str)> {
 const BREATH_AFTER: f64 = 0.03;
 
 fn syllable(w: &Written) -> Option<Syllable> {
+    let mut s = syllable_marked(w)?;
+    // 모음사각도 매칭 (사용자 지정 2026-11-23): ㆆ 은 ㅣ ㅔ 의 긴장·이완을 가르는 표지다 —
+    // ᅙᅵ = ᅟᅵᇹ = [ɪ], ᅙᅦ = [e] (ㅔ 는 [e̞]). 이때 ㆆ 은 [ʔ] 로 나지 않는다
+    let glottal_lead = w.lead == Some('ᅙ') && s.onset.first().is_some_and(|o| o.ipa == "ʔ");
+    match (w.vowel.as_slice(), glottal_lead, w.tail.as_slice()) {
+        (['ᅵ'], true, _) => {
+            s.onset.remove(0);
+            s.nucleus.ipa = "ɪ".into();
+        }
+        (['ᅦ'], true, _) => {
+            s.onset.remove(0);
+            s.nucleus.ipa = "e".into();
+        }
+        (['ᅵ'], false, ['ᇹ']) if s.coda.last().is_some_and(|c| c.ipa == "ʔ") => {
+            s.coda.pop();
+            s.nucleus.ipa = "ɪ".into();
+        }
+        _ => {}
+    }
+    Some(s)
+}
+
+fn syllable_marked(w: &Written) -> Option<Syllable> {
     let nasal = w.tail.contains(&'ᇰ');
     let french = if nasal { nasal_vowel(&w.vowel) } else { None };
     let mut s = match french {
@@ -696,10 +741,10 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
 
 impl FrontEnd for Jeongeum {
     fn starts(&self, c: char) -> bool {
-        is_block(c) || is_conjoining(c) || compat_lead(c).is_some()
+        is_block(c) || is_conjoining(c) || compat_lead(c).is_some() || compat_vowel(c).is_some()
     }
     fn continues(&self, c: char) -> bool {
-        is_block(c) || is_conjoining(c) || compat_tail(c).is_some() || compat_lead(c).is_some()
+        is_block(c) || is_conjoining(c) || compat_tail(c).is_some() || compat_lead(c).is_some() || compat_vowel(c).is_some()
     }
     /// 정음은 한글의 상위호환이고 표음 표기: 모든 한글을 쓴 대로 읽는다 (국물 = [국.물], 이어 읽으면 궁물로 적음).
     /// 형태주의 맞춤법(먹어 → 머거)을 발음으로 바꾸는 일은 이 처리기가 아니라 한글→정음 변환의 몫이다.
