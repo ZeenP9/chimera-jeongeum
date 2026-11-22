@@ -15,6 +15,7 @@
 //! - Vowel values: the Seeing Speech cardinal vowels (Janet Beck) measured and calibrated as the
 //!   back keys ɯ̠ ɤ̠ ʌ̠ ɑ̠ and the midpoints ɤ̞ e̞ ø̞ o̞ (vowel_data.rs).
 //!
+//! - Lax ㄱ ㄷ ㅂ ㅈ are voiced (and ㅎ is ɦ) between voiced sounds, as the Korean front end does.
 //! - Consonants: see `onset`, `coda` and the rules in `syllable` / `word_syllables` (palatals by
 //!   C+j, uvulars by ㄲ ㄱ ㅋ ㅎ + ㅡ-compound, ᄒᆞᇹ ħ / ᅙᆞᇂ ʕ, coda ㅿ marks, ㄹ|ㅎ ʀ, ㅎ|ㄹ ʁ).
 //!
@@ -535,6 +536,31 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
                 *first = Segment::new(m);
             }
         }
+    }
+    // 유성음 사이의 평음 ㄱ ㄷ ㅂ ㅈ 은 유성 [g d b dʑ], ㅎ 은 [ɦ] (한국어 처리기와 같은 규칙, 사용자 지정):
+    // 앞 음절이 모음이나 유성 받침(ㄴ ㄹ ㅁ ㅇ, 옛 ㆁ ㅱ ㅭ ㄶ)으로 끝날 때 (가다 [kada], 안다 [anda])
+    for k in 1..out.len() {
+        let (i, j) = (out[k - 1].0, out[k].0);
+        if j != i + 1 {
+            continue;
+        }
+        let voiced_before = match ws[i].tail.last() {
+            None => true,
+            Some(t) => matches!(t, 'ᆫ' | 'ᆯ' | 'ᆷ' | 'ᆼ' | 'ᇰ' | 'ᇢ' | 'ᇙ' | 'ᆭ'),
+        };
+        if !voiced_before {
+            continue;
+        }
+        let Some(first) = out[k].1.onset.first_mut() else { continue };
+        let voiced = match (ws[j].lead, first.ipa.as_str(), first.aspirated) {
+            (Some('ᄀ'), "k", Some(true)) => "g",
+            (Some('ᄃ'), "t", Some(true)) => "d",
+            (Some('ᄇ'), "p", Some(true)) => "b",
+            (Some('ᄌ'), "tɕ", Some(true)) => "dʑ",
+            (Some('ᄒ'), "h", _) => "ɦ",
+            _ => continue,
+        };
+        *first = Segment { dur: first.dur, ..Segment::new(voiced) };
     }
     // 모음 사이의 받침 ㅎ = 유성 ɦ (다음 음절이 초성 없이 모음으로 시작할 때: 아랍어·프랑스어 표기). 그 밖의 받침 ㅎ = h
     for k in 0..out.len().saturating_sub(1) {
