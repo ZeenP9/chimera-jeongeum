@@ -298,24 +298,12 @@ fn syllable(w: &Written) -> Option<Syllable> {
     if nasal {
         s.nucleus.nasalized = Some(true);
     }
-    // ᆜ (ㅣ→ㅡ 를 잇따라): ㅡ 는 기식(숨)이라 숨 섞인 ㅣ [i̤] (산스크리트 dhi ᄃᆜ = di̤, ghi ᄀᆜ = gi̤).
+    // ᆜ (ㅣ→ㅡ 를 잇따라): ㅡ 는 기식(숨)이라 숨 섞인 ㅣ [i̤] (일본어 し ᄉᆜ = ɕi̤, 산스크리트 dhi ᄃᆜ = di̤).
+    // 중국어 zi ci si 는 ᄌᆜ ᄎᆜ ᄉᆜ 가 원형이라 책에 적었을 뿐, 실제 병음 표기는 찌 치 씨 (사용자 지정)
     // ㆆ 를 앞세운 ᅙᆜ 는 중설 고모음 [ʔɨ] (폴란드어 y): ㆆ 의 [ʔ] 가 날카로움을 더한다 (사용자 지정)
     if w.vowel == ['ᆜ'] {
         if w.lead == Some('ᅙ') {
             s.nucleus.ipa = "ɨ".into();
-        } else if let Some(l @ ('ᄌ' | 'ᄍ' | 'ᄎ' | 'ᄉ' | 'ᄊ')) = w.lead {
-            // ㅈ ㅊ ㅅ 는 ㆆ 를 품은 글자라 (사용자 지정) ㅈ ㅊ ㅅ + ᆜ 는 ᅙᆜ 처럼 날카로운 [ɨ]: 중국어 z c s,
-            // 폴란드어 cy sy. 자음은 혀끝 치조 파찰·마찰음 [ts tsʰ s] (ㅣ 앞의 구개음화 ɕ tɕ 가 아님)
-            s.nucleus.ipa = "ɨ".into();
-            if let Some(first) = s.onset.first_mut() {
-                let (ipa, asp, vot) = match l {
-                    'ᄌ' => ("ts", Some(true), Some(0.03)),
-                    'ᄍ' => ("ts", Some(false), None),
-                    'ᄎ' => ("ts", Some(true), Some(0.08)),
-                    _ => ("s", None, None),
-                };
-                *first = Segment { aspirated: asp, vot, dur: first.dur, ..Segment::new(ipa) };
-            }
         } else {
             s.nucleus.breathy = Some(true);
             // ㄱ ㄷ ㅂ ㅈ + ᆜ: ㅡ 가 유성 기식이라 유성음 (산스크리트 ghi dhi bhi jhi = ᄀᆜ ᄃᆜ ᄇᆜ ᄌᆜ → gʱi dʱi bʱi dʑʱi)
