@@ -234,6 +234,15 @@ fn coda(c: char) -> Option<&'static str> {
         'ᆩ' | 'ᆿ' => "k",
         'ᇀ' | 'ᆽ' | 'ᆾ' | 'ᆻ' => "t",
         'ᇁ' => "p",
+        // 한글 겹받침 (사용자 지정): 앞 자음이 나는 ㄳ ㄵ ㄼ ㄽ ㄾ ㅄ, 뒤 자음이 나는 ㄺ ㄻ ㄿ.
+        // ㄶ(ɴ)·ㅀ(ʀ)은 正音의 옛 받침 값으로 따로 둔다
+        'ᆪ' => "k",
+        'ᆬ' => "n",
+        'ᆲ' | 'ᆳ' | 'ᆴ' => "l",
+        'ᆹ' => "p",
+        'ᆰ' => "k",
+        'ᆱ' => "m",
+        'ᆵ' => "p",
         'ᇢ' => "ʋ", // 종성 ㅱ (가벼운 미음)
         'ᆭ' => "ɴ", // 종성 ㄶ: 목젖 비음
         'ᆶ' => "ʀ", // 종성 ㅀ: 목젖 전동음
@@ -514,8 +523,37 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
     Some(Syllable { text: w.text.clone(), onset: on, nucleus: Segment::new(nucleus), coda: cd, ..Default::default() })
 }
 
+/// 한글 겹받침의 두 자음: (받침에 남는 자음, 다음 음절 첫소리로 옮겨 갈 자음).
+fn double_coda(t: char) -> Option<(char, char)> {
+    Some(match t {
+        'ᆪ' => ('ᆨ', 'ᄉ'), // ㄳ
+        'ᆬ' => ('ᆫ', 'ᄌ'), // ㄵ
+        'ᆲ' => ('ᆯ', 'ᄇ'), // ㄼ
+        'ᆳ' => ('ᆯ', 'ᄉ'), // ㄽ
+        'ᆴ' => ('ᆯ', 'ᄐ'), // ㄾ
+        'ᆹ' => ('ᆸ', 'ᄉ'), // ㅄ
+        'ᆰ' => ('ᆯ', 'ᄀ'), // ㄺ
+        'ᆱ' => ('ᆯ', 'ᄆ'), // ㄻ
+        'ᆵ' => ('ᆯ', 'ᄑ'), // ㄿ
+        _ => return None,
+    })
+}
+
 pub fn word_syllables(word: &str) -> Vec<Syllable> {
-    let ws = split(word);
+    let mut ws = split(word);
+    // 겹받침 + 초성 없는 음절: 뒤 자음이 다음 음절 첫소리로 옮겨 간다 (앉아 [안자], 넓어 [널버], 값이 [갑시],
+    // 닭이 [달기]: 표준 발음법 제14항). 홀로 또는 자음 앞에서는 한 자음만 난다 (`coda`)
+    for i in 0..ws.len().saturating_sub(1) {
+        if ws[i + 1].lead.is_none()
+            && !ws[i + 1].vowel.is_empty()
+            && let Some(&t) = ws[i].tail.last()
+            && let Some((stay, moved)) = double_coda(t)
+        {
+            *ws[i].tail.last_mut().unwrap() = stay;
+            ws[i + 1].lead = Some(moved);
+        }
+    }
+    let ws = ws;
     let mut out: Vec<(usize, Syllable)> = ws.iter().enumerate().filter_map(|(i, w)| syllable(w).map(|s| (i, s))).collect();
     // 음절 경계를 넘는 결합: 앞 음절 종성 + 다음 음절 초성이 한 소리가 된다 (다음 음절 첫소리로 낸다)
     //   종성 ㄹ + 초성 ㅎ = ʀ (목젖 전동음), 종성 ㅎ + 초성 ㄹ = ʁ (목젖 마찰음)
@@ -546,7 +584,7 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
         }
         let voiced_before = match ws[i].tail.last() {
             None => true,
-            Some(t) => matches!(t, 'ᆫ' | 'ᆯ' | 'ᆷ' | 'ᆼ' | 'ᇰ' | 'ᇢ' | 'ᇙ' | 'ᆭ'),
+            Some(t) => matches!(t, 'ᆫ' | 'ᆯ' | 'ᆷ' | 'ᆼ' | 'ᇰ' | 'ᇢ' | 'ᇙ' | 'ᆭ' | 'ᆬ' | 'ᆲ' | 'ᆳ' | 'ᆴ' | 'ᆱ'),
         };
         if !voiced_before {
             continue;
