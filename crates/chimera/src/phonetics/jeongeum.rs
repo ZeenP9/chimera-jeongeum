@@ -10,7 +10,7 @@
 //! Rules (as decided with the notation's author, 2026-11):
 //! - The vowel after a sonorant onset (ㄴ ㄹ ㅁ ㆁ, and no onset at all) sits one step lower:
 //!   ㅡ ɯ → ɤ, ㅓ ɤ̞ → ʌ, ㆍ ə → ɑ. ㆆ is the glottal stop [ʔ] and is not a sonorant.
-//! - ㅔ e̞, ㅚ ø̞, ㅗ o̞ (true-mid vowels); ᆜ ɿ (apical, z c s); ㅢ after ㅈ ㅊ ㅅ is ʅ and turns the
+//! - ㅔ e̞, ㅚ ø̞, ㅗ o̞ (true-mid vowels); ᆜ breathy i̤ (ㅣ + breath; ᅙᆜ = ʔɨ); ㅢ after ㅈ ㅊ ㅅ is ʅ and turns the
 //!   onset retroflex (즤 [tʂʅ]); a coda ㅿ there only confirms it. ᅟᅥᇫ is ɝ. ᅟᆕ ʉ, ᅟힼ ɵ.
 //! - Vowel values: the Seeing Speech cardinal vowels (Janet Beck) measured and calibrated as the
 //!   back keys ɯ̠ ɤ̠ ʌ̠ ɑ̠ and the midpoints ɤ̞ e̞ ø̞ o̞ (vowel_data.rs).
@@ -206,7 +206,7 @@ fn vowel(v: &[char], son: bool) -> Option<(&'static str, &'static str)> {
         ['ᅴ'] => ("ɰ", "i"), // after a consonant: see `syllable`
         ['ᅵ'] => ("", "i"),
         ['ᆞ'] => ("", arae),
-        ['ᆜ'] => ("", "ɿ"),   // ㅣ+ㅡ: the apical vowel of z c s
+        ['ᆜ'] => ("", "i"),   // ㅣ→ㅡ: ㅣ + 숨 (숨 섞인 i̤), ᅙᆜ 는 ɨ — `syllable`
         ['ᆕ'] => ("", "ʉ"),   // ㅡ+ㅜ
         ['ힼ'] => ("", "ɵ"),   // ㅡ+ㅗ
         ['ᆐ'] => ("", "yɛ"),  // ㅠ+ㅔ (jue4 ᄌᆐ)
@@ -297,6 +297,28 @@ fn syllable(w: &Written) -> Option<Syllable> {
     }
     if nasal {
         s.nucleus.nasalized = Some(true);
+    }
+    // ᆜ (ㅣ→ㅡ 를 잇따라): ㅡ 는 기식(숨)이라 숨 섞인 ㅣ [i̤] (일본어 し ᄉᆜ = ɕi̤, 산스크리트 dhi ᄃᆜ = di̤).
+    // ㆆ 를 앞세운 ᅙᆜ 는 중설 고모음 [ʔɨ] (폴란드어 y): ㆆ 의 [ʔ] 가 날카로움을 더한다 (사용자 지정)
+    if w.vowel == ['ᆜ'] {
+        if w.lead == Some('ᅙ') {
+            s.nucleus.ipa = "ɨ".into();
+        } else {
+            s.nucleus.breathy = Some(true);
+            // ㄱ ㄷ ㅂ ㅈ + ᆜ: ㅡ 가 유성 기식이라 유성음 (산스크리트 ghi dhi bhi jhi = ᄀᆜ ᄃᆜ ᄇᆜ ᄌᆜ → gʱi dʱi bʱi dʑʱi)
+            if let Some(first) = s.onset.first_mut() {
+                let voiced = match (w.lead, first.ipa.as_str()) {
+                    (Some('ᄀ'), "k") => Some("g"),
+                    (Some('ᄃ'), "t") => Some("d"),
+                    (Some('ᄇ'), "p") => Some("b"),
+                    (Some('ᄌ'), "tɕ") => Some("dʑ"),
+                    _ => None,
+                };
+                if let Some(v) = voiced {
+                    *first = Segment { dur: first.dur, ..Segment::new(v) };
+                }
+            }
+        }
     }
     Some(s)
 }

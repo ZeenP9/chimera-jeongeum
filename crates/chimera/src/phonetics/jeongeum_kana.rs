@@ -265,7 +265,9 @@ impl FrontEnd for JeongeumKana {
             };
             let first = out.is_empty();
             let (onset, nucleus) = sound(&m, first);
-            out.push(Syllable { text: spell(&m, first), onset, nucleus: Segment::new(nucleus), ..Default::default() });
+            // し 는 ᄉᆜ: ㅣ + 숨 (책; 일본어 고모음 무성화) — 숨 섞인 i̤
+            let breathy = (m.cons == "s" && m.vowel == 'i' && !m.yoon).then_some(true);
+            out.push(Syllable { text: spell(&m, first), onset, nucleus: Segment { breathy, ..Segment::new(nucleus) }, ..Default::default() });
             last_vowel = Some(m.vowel);
             i += 1;
         }
