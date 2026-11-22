@@ -228,7 +228,7 @@ fn coda(c: char) -> Option<&'static str> {
         'ᇙ' => "ɫ", // 종성 ㅭ (ㄹ+ㆆ, 以影補來): 연구개화 설측음
         'ᆷ' => "m",
         'ᆸ' => "p",
-        'ᆼ' | 'ᇰ' => "ŋ",
+        'ᆼ' => "ŋ", // 현대 한글의 받침 ㅇ = [ŋ]. 옛 받침 ㆁ(ᇰ)은 비모음 표지: `syllable`
         'ᆺ' => "s",
         'ᆩ' | 'ᆿ' => "k",
         'ᇀ' | 'ᆽ' | 'ᆾ' | 'ᆻ' => "t",
@@ -257,7 +257,17 @@ fn eu_base(c: char) -> Option<char> {
     }
 }
 
+/// 받침 ㆁ(ᇰ)은 자음이 아니라 앞 모음을 비모음으로 만든다 (프랑스어 비모음: 모음 + 받침 ㆁ). 현대 한글의
+/// 받침 ㅇ(ᆼ)은 [ŋ].
 fn syllable(w: &Written) -> Option<Syllable> {
+    let mut s = syllable_oral(w)?;
+    if w.tail.contains(&'ᇰ') {
+        s.nucleus.nasalized = Some(true);
+    }
+    Some(s)
+}
+
+fn syllable_oral(w: &Written) -> Option<Syllable> {
     // 모음 없이 종성만 있는 음절: 성절 자음 (ᅟᅠᆫ = 嗯 n, ᅟᅠᆼ = ng, ᅟᅠᇢ = 呣 m 을 ㅱ=[ʋ]로)
     if w.vowel.is_empty() && let Some((first, rest)) = w.tail.split_first() {
         let nucleus = coda(*first)?;
@@ -573,10 +583,11 @@ impl FrontEnd for JeongeumHan<'_> {
                 i += 1;
             }
             let Some(py) = pys.get(i) else { break };
-            // 嗯: 사전은 옛 표기 n2 로 읽지만 현대 표준(《现代汉语词典》)은 ng (ńg ňg ǹg)
+            // 嗯: 사전은 옛 표기 n2(물음) 하나로 읽는다. 현대 표준(《现代汉语词典》)대로 ng 로 읽고, 성조는 가장 흔한
+            // 4성 대답 ǹg ᅙᆞᆼ("응.")을 기본으로 한다 (물음 ńg ᅙᆞᇰ, 놀람 ňg ᅙᅳᆼ 은 正音으로 직접 적는다)
             let std_py;
             let py = if py.trim_end_matches(|c: char| c.is_ascii_digit()) == "n" {
-                std_py = format!("ng{}", &py[1..]);
+                std_py = "ng4".to_string();
                 &std_py
             } else {
                 py
