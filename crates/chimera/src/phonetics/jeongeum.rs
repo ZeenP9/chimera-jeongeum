@@ -22,8 +22,11 @@
 //! the rising tone, ㆆ falling in the 3rd tone) — pinyin goes through jeongeum_pinyin.py /
 //! jeongeum_sing.py, which set pitch per syllable. Every block is one sung syllable here.
 
+use super::mandarin::{Mandarin, MandarinLexicon, is_han};
 use super::syllables::FrontEnd;
-use super::{Segment, Syllable};
+use super::{Bend, Edge, Segment, Syllable};
+use std::collections::HashMap;
+use std::sync::OnceLock;
 
 pub struct Jeongeum;
 
@@ -494,5 +497,80 @@ impl FrontEnd for Jeongeum {
     /// 형태주의 맞춤법(먹어 → 머거)을 발음으로 바꾸는 일은 이 처리기가 아니라 한글→정음 변환의 몫이다.
     fn word(&self, word: &str) -> Vec<Syllable> {
         word_syllables(word)
+    }
+}
+
+// ── 한자(중국어) → 병음·성조 → 正音 ─────────────────────────────────────────────────────────────
+
+/// 병음(성조 숫자) → 正音 표기, 《正音으로 듣고쓰다》 pp.35–37 규칙으로 만든 표 (jeongeum_pinyin.py 가 생성).
+static PINYIN_TABLE: &str = include_str!("jeongeum_pinyin.tsv");
+
+/// zhong1 → 즤옹. 표에 없는 음절은 None.
+pub fn pinyin_to_jeongeum(py: &str) -> Option<&'static str> {
+    static TABLE: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
+    TABLE
+        .get_or_init(|| PINYIN_TABLE.lines().filter(|l| !l.starts_with('#')).filter_map(|l| l.split_once('\t')).collect())
+        .get(py)
+        .copied()
+}
+
+/// 성조를 正音 표기대로 노래의 음높이 굽이로 싣는다 (멜로디 음에서 반음 단위로):
+///   1성(경성 포함) 평평 · 2성 ㆁ = 아래에서 올라감 · 3성 ㅡ첨가 = ㅢ식 굴곡(ɨ 활음, 내려갔다 오름),
+///   3성 ㆆ = 하강 · 4성 = 크게 하강, 첫머리 ㆆ(二 ᅙᅥᆯ)는 [ʔ].
+/// [ʔ]는 正音 표기에 ㆆ가 있을 때만: 중국어 처리기가 초성 없는 음절에 붙이는 기본 [ʔ]는 뗀다.
+fn apply_tone(s: &mut Syllable, tone: u8, spelling: &str) {
+    s.onset.retain(|x| x.ipa != "ʔ");
+    let bend = |at, len, max, st| Bend { at, len, max, st };
+    match tone {
+        2 => s.pitch = vec![bend(Edge::Start, 0.75, 0.6, -4.0)],
+        3 if spelling.contains('ᅙ') => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
+        3 => {
+            let glide = format!("ɨ{}", s.nucleus.ipa);
+            if super::planner::expand(&glide).is_some() {
+                s.nucleus.ipa = glide;
+            }
+            s.pitch = vec![bend(Edge::Middle, 0.4, 0.35, -2.0), bend(Edge::End, 0.35, 0.3, 3.0)];
+        }
+        4 => {
+            if spelling.starts_with('ᅙ') {
+                s.onset.insert(0, Segment::new("ʔ"));
+            }
+            s.pitch = vec![bend(Edge::End, 0.85, 0.5, -8.0)];
+        }
+        _ => {}
+    }
+}
+
+/// 한자(간체) → 중국어 독음을 正音으로: 사전으로 병음·성조를 읽고(어구 우선, 성조 변화 포함), 소리는 중국어
+/// 처리기의 음가로 내되 음절 글자는 正音 표기로 바꾸고 성조는 正音 표기대로 싣는다. 중국어 처리기의 상위호환.
+pub struct JeongeumHan<'a>(pub &'a MandarinLexicon);
+
+impl FrontEnd for JeongeumHan<'_> {
+    fn starts(&self, c: char) -> bool {
+        is_han(c)
+    }
+    fn word(&self, run: &str) -> Vec<Syllable> {
+        let cs: Vec<char> = run.chars().collect();
+        let pys = self.0.read(run);
+        let mut syls = Mandarin(self.0).word(run);
+        // 음절 ↔ 글자 맞추기: 음절 글자는 한 글자(儿화는 두 글자), 읽지 못한 글자는 음절이 없다
+        let mut i = 0;
+        for s in &mut syls {
+            let first = s.text.chars().next();
+            while i < cs.len() && Some(cs[i]) != first {
+                i += 1;
+            }
+            let Some(py) = pys.get(i) else { break };
+            let n = s.text.chars().count();
+            let tone = py.chars().last().and_then(|c| c.to_digit(10)).unwrap_or(5) as u8;
+            let spelling = pinyin_to_jeongeum(py).unwrap_or("");
+            // 儿화(块儿)의 正音 표기는 아직 정하지 않아 한자 그대로 둔다
+            if n == 1 && !spelling.is_empty() {
+                s.text = spelling.to_string();
+            }
+            apply_tone(s, tone, spelling);
+            i += n;
+        }
+        syls
     }
 }
