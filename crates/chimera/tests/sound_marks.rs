@@ -236,9 +236,10 @@ fn a_breathy_release_parts_the_folds_across_the_release_and_into_the_vowel() {
     let g = labelled(&soft.gestures, "breathy");
     assert_eq!(g.len(), 1);
     let (stop, vowel) = (&soft.segments[0], &soft.segments[1]);
-    // ɦ's abduction, from just before the release to 80 ms after it (the vowel here lasts longer)
-    assert_eq!(g[0].targets.get(ControlKey::ABDUCTION), Some(0.1));
-    assert!((g[0].t0 - (stop.t1 - 0.02)).abs() < 1e-9 && (g[0].t1 - (stop.t1 + 0.08)).abs() < 1e-9 && vowel.t1 > g[0].t1);
+    // fork (正音): wider than ɦ's abduction and shorter, after the UBC Sanskrit recordings — from just
+    // before the release to 45 ms after it for b (70 ms for g); the vowel here lasts longer
+    assert_eq!(g[0].targets.get(ControlKey::ABDUCTION), Some(0.22));
+    assert!((g[0].t0 - (stop.t1 - 0.02)).abs() < 1e-9 && (g[0].t1 - (stop.t1 + 0.045)).abs() < 1e-9 && vowel.t1 > g[0].t1);
     // a short vowel ends it
     let short = plan(&[Segment { breathy: Some(true), ..Segment::new("b") }, Segment { dur: Some(0.04), ..Segment::new("a") }]);
     assert_eq!(labelled(&short.gestures, "breathy")[0].t1, short.segments[1].t1);

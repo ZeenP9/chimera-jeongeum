@@ -328,8 +328,16 @@ struct Seg<'a> {
 /// glottal abduction of breathy voice: /ɦ/'s, a gap the folds still vibrate across
 const BREATHY_ABDUCTION: f64 = 0.1;
 /// how long past its release a breathy-voiced stop's folds stay apart (s), at most to the end of
-/// the next segment
-const BREATHY_RELEASE: f64 = 0.08;
+/// the next segment. Fork (正音): shorter and by place, after the UBC Sanskrit recordings
+/// (ubcsanskrit.ca, lesson 1): the murmur after the release lasts ~40–50 ms for dha bha and ~70 ms
+/// for gha, against the former 80 ms for every place
+fn breathy_release(place: &str) -> f64 {
+    if matches!(place, "velar" | "uvular") { 0.07 } else { 0.045 }
+}
+/// glottal abduction of a breathy-voiced stop's release. Fork (正音): wider than /ɦ/'s 0.1, so the
+/// murmur is as distinct as in the UBC recordings (periodicity 0.2–0.3 just after the release,
+/// where 0.1 left it at 0.4–0.5)
+const BREATHY_RELEASE_ABDUCTION: f64 = 0.22;
 
 /// A trill's strikes, `TRILL_HZ` a second: the share of each cycle spent at the place, the
 /// ramps (s), the articulator speed, and how far (cm) the tongue is pulled back between strikes.
@@ -613,8 +621,8 @@ pub fn plan_timed<'a>(input: impl Iterator<Item = TimedSegment<'a>>, o: &PlanOpt
         // a breathy-voiced release (Hindi bʱ): the folds part as the closure lets go and stay
         // apart into the start of the vowel
         if s.breathy == Some(true) && def.voicing == Voicing::Voiced && matches!(def.manner, Manner::Stop | Manner::Affricate) {
-            let until = js_min(t1 + BREATHY_RELEASE, times.get(i + 1).map_or(f64::MAX, |n| n.t1));
-            gestures.push(Gesture::new(t1 - 0.02, until, 0.03, 0.03, 5.0, one(ControlKey::ABDUCTION, BREATHY_ABDUCTION)).label("breathy"));
+            let until = js_min(t1 + breathy_release(def.place), times.get(i + 1).map_or(f64::MAX, |n| n.t1));
+            gestures.push(Gesture::new(t1 - 0.02, until, 0.02, 0.02, 5.0, one(ControlKey::ABDUCTION, BREATHY_RELEASE_ABDUCTION)).label("breathy"));
         }
         // palatalization: the tongue body goes toward /j/ under the consonant, stays there until the
         // voice returns, and lets go into the vowel, so the release carries the [j]-like transition
