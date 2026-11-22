@@ -14,6 +14,7 @@
 use crate::anatomy::human::BodyMix;
 use super::english::js_is_space;
 use super::jeongeum::{Jeongeum, JeongeumHan};
+use super::jeongeum_deva::JeongeumDeva;
 use super::jeongeum_kana::{JeongeumKana, is_kana};
 use super::korean::Korean;
 use super::mandarin::{Mandarin, MandarinLexicon, Pinyin};
@@ -349,7 +350,7 @@ pub fn lyrics_in(text: &str, g2p: &impl WordSource, zh: &MandarinLexicon, lang: 
     let no_han = MandarinLexicon::new();
     let zh = if text.chars().any(is_kana) { &no_han } else { zh };
     match lang {
-        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Jeongeum, &JeongeumKana, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
-        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Jeongeum, &JeongeumKana, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
+        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Jeongeum, &JeongeumKana, &JeongeumDeva, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
+        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Jeongeum, &JeongeumKana, &JeongeumDeva, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
     }
 }
