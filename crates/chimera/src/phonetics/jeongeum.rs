@@ -10,7 +10,7 @@
 //! Rules (as decided with the notation's author, 2026-11):
 //! - The vowel after a sonorant onset (ㄴ ㄹ ㅁ ㆁ, and no onset at all) sits one step lower:
 //!   ㅡ ɯ → ɤ, ㅓ ɤ̞ → ʌ, ㆍ ə → ɑ. ㆆ is the glottal stop [ʔ] and is not a sonorant.
-//! - ㅔ e̞, ㅚ ø̞, ㅗ o̞ (true-mid vowels); ᆜ breathy i̤ (ㅣ + breath; ᅙᆜ = ʔɨ); ㅢ after ㅈ ㅊ ㅅ is ʅ and turns the
+//! - ㅔ e̞, ㅚ ø̞, ㅗ o̞ (true-mid vowels); ᆜ = ㅣ after a breathy release (ᄃᆜ dʱi, ᄉᆜ ɕʰi; ᅙᆜ = ʔɨ); ㅢ after ㅈ ㅊ ㅅ is ʅ and turns the
 //!   onset retroflex (즤 [tʂʅ]); a coda ㅿ there only confirms it. ᅟᅥᇫ is ɝ. ᅟᆕ ʉ, ᅟힼ ɵ.
 //! - Vowel values: the Seeing Speech cardinal vowels (Janet Beck) measured and calibrated as the
 //!   back keys ɯ̠ ɤ̠ ʌ̠ ɑ̠ and the midpoints ɤ̞ e̞ ø̞ o̞ (vowel_data.rs).
@@ -286,6 +286,9 @@ fn nasal_vowel(v: &[char]) -> Option<(char, &'static str)> {
     })
 }
 
+/// ᆜ 의 숨: 유성 파열·파찰음이 아닌 자음 뒤에 붙이는 짧은 [h] 의 길이 (s)
+const BREATH_AFTER: f64 = 0.03;
+
 fn syllable(w: &Written) -> Option<Syllable> {
     let nasal = w.tail.contains(&'ᇰ');
     let french = if nasal { nasal_vowel(&w.vowel) } else { None };
@@ -299,27 +302,27 @@ fn syllable(w: &Written) -> Option<Syllable> {
     if nasal {
         s.nucleus.nasalized = Some(true);
     }
-    // ᆜ (ㅣ→ㅡ 를 잇따라): ㅡ 는 기식(숨)이라 숨 섞인 ㅣ [i̤] (일본어 し ᄉᆜ = ɕi̤, 산스크리트 dhi ᄃᆜ = di̤).
-    // 중국어 zi ci si 는 ᄌᆜ ᄎᆜ ᄉᆜ 가 원형이라 책에 적었을 뿐, 실제 병음 표기는 찌 치 씨 (사용자 지정)
-    // ㆆ 를 앞세운 ᅙᆜ 는 중설 고모음 [ʔɨ] (폴란드어 y): ㆆ 의 [ʔ] 가 날카로움을 더한다 (사용자 지정)
+    // ᆜ (ㅣ→ㅡ 를 잇따라): ㅡ 는 기식(숨). 산스크리트 유성 유기음에 맞춘다 (사용자 지정): ㄱ ㄷ ㅂ ㅈ + ᆜ 는 유성음이
+    // 터진 뒤 잠깐(엔진: 0.08초) 성대를 벌린 숨 섞인 개방 [gʱi dʱi bʱi dʑʱi] (ᄀᆜ ᄃᆜ ᄇᆜ ᄌᆜ), 모음은 보통 [i].
+    // 유성 파열·파찰음이 아닌 자음 뒤(ᄉᆜ = 일본어 し)는 자음 뒤 짧은 숨 [ɕʰi]. ᅟᆜ 단독은 [ɦi].
+    // ᅙᆜ 는 중설 고모음 [ʔɨ] (폴란드어 y): ㆆ 의 [ʔ] 가 날카로움을 더한다
     if w.vowel == ['ᆜ'] {
         if w.lead == Some('ᅙ') {
             s.nucleus.ipa = "ɨ".into();
-        } else {
-            s.nucleus.breathy = Some(true);
-            // ㄱ ㄷ ㅂ ㅈ + ᆜ: ㅡ 가 유성 기식이라 유성음 (산스크리트 ghi dhi bhi jhi = ᄀᆜ ᄃᆜ ᄇᆜ ᄌᆜ → gʱi dʱi bʱi dʑʱi)
-            if let Some(first) = s.onset.first_mut() {
-                let voiced = match (w.lead, first.ipa.as_str()) {
-                    (Some('ᄀ'), "k") => Some("g"),
-                    (Some('ᄃ'), "t") => Some("d"),
-                    (Some('ᄇ'), "p") => Some("b"),
-                    (Some('ᄌ'), "tɕ") => Some("dʑ"),
-                    _ => None,
-                };
-                if let Some(v) = voiced {
-                    *first = Segment { dur: first.dur, ..Segment::new(v) };
-                }
+        } else if let Some(first) = s.onset.first_mut() {
+            let voiced = match (w.lead, first.ipa.as_str()) {
+                (Some('ᄀ'), "k") => Some("g"),
+                (Some('ᄃ'), "t") => Some("d"),
+                (Some('ᄇ'), "p") => Some("b"),
+                (Some('ᄌ'), "tɕ") => Some("dʑ"),
+                _ => None,
+            };
+            match voiced {
+                Some(v) => *first = Segment { breathy: Some(true), dur: first.dur, ..Segment::new(v) },
+                None => s.onset.push(Segment { dur: Some(BREATH_AFTER), ..Segment::new("h") }),
             }
+        } else {
+            s.onset.push(Segment { dur: Some(BREATH_AFTER), ..Segment::new("ɦ") });
         }
     }
     Some(s)
