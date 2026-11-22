@@ -514,6 +514,17 @@ pub fn pinyin_to_jeongeum(py: &str) -> Option<&'static str> {
         .copied()
 }
 
+/// 3성 ㆆ형: ㆆ가 둘째 음절 이후의 첫소리로 쓰였다 (마ᅙᅡ). 첫 음절의 ᅙᆞ·ᅙᅳ(성절 자음 ᅙᅳᄋᆞᆼ)는 아니다.
+fn hieut_inside(spelling: &str) -> bool {
+    spelling.char_indices().any(|(i, c)| i > 0 && c == 'ᅙ')
+}
+
+/// 첫머리 ㆆ = [ʔ] (二 ᅙᅥᆯ). 단 ᅙᆞ(= ə)·ᅙᅳ 는 성절 자음 표기의 한 단위라 [ʔ]가 아니다 (嗯 ᅙᆞᆼ).
+fn glottal_start(spelling: &str) -> bool {
+    let mut cs = spelling.chars();
+    cs.next() == Some('ᅙ') && !matches!(cs.next(), Some('ᆞ' | 'ᅳ'))
+}
+
 /// 성조를 正音 표기대로 노래의 음높이 굽이로 싣는다 (멜로디 음에서 반음 단위로):
 ///   1성(경성 포함) 평평 · 2성 ㆁ = 아래에서 올라감 · 4성 = 크게 하강, 첫머리 ㆆ(二 ᅙᅥᆯ)는 [ʔ].
 ///   3성은 표기는 하나지만 소리는 자리에 따라: 구 끝(`last`)이면 온3성 214 — ㅡ첨가형은 ㅢ식 굴곡(ɨ 활음,
@@ -524,7 +535,7 @@ fn apply_tone(s: &mut Syllable, tone: u8, spelling: &str, last: bool) {
     let bend = |at, len, max, st| Bend { at, len, max, st };
     match tone {
         2 => s.pitch = vec![bend(Edge::Start, 0.75, 0.6, -4.0)],
-        3 if !last || spelling.contains('ᅙ') => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
+        3 if !last || hieut_inside(spelling) => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
         3 => {
             let glide = format!("ɨ{}", s.nucleus.ipa);
             if super::planner::expand(&glide).is_some() {
@@ -533,7 +544,7 @@ fn apply_tone(s: &mut Syllable, tone: u8, spelling: &str, last: bool) {
             s.pitch = vec![bend(Edge::Middle, 0.4, 0.35, -2.0), bend(Edge::End, 0.35, 0.3, 3.0)];
         }
         4 => {
-            if spelling.starts_with('ᅙ') {
+            if glottal_start(spelling) {
                 s.onset.insert(0, Segment::new("ʔ"));
             }
             s.pitch = vec![bend(Edge::End, 0.85, 0.5, -8.0)];
@@ -570,6 +581,13 @@ impl FrontEnd for JeongeumHan<'_> {
                 s.text = spelling.to_string();
             }
             apply_tone(s, tone, spelling, i + n >= cs.len());
+            // 성절 자음: 중국어 처리기는 n·ng·m 을 모두 [ən]으로 근사한다. 正音 표기대로 받침을 낸다
+            // (ᅙᆞᆫ ən · ᅙᆞᆼ əŋ · ᅙᆞᇢ əʋ)
+            let base = py.trim_end_matches(|c: char| c.is_ascii_digit());
+            if matches!(base, "n" | "ng" | "m" | "hm" | "hng") {
+                let coda = if base.ends_with("ng") { "ŋ" } else if base.ends_with('m') { "ʋ" } else { "n" };
+                s.coda = vec![Segment::new(coda)];
+            }
             i += n;
         }
         syls
