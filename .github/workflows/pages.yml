@@ -26,6 +26,16 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # old-Hangul font for 正音 lyrics: Noto Sans CJK KR (SIL OFL) cut down to the Hangul blocks,
+      # keeping the jamo-composing OpenType features (ljmo vjmo tjmo)
+      - name: Hangul font subset
+        run: |
+          pip install --quiet fonttools brotli
+          curl -sSfL -o /tmp/noto.otf https://github.com/notofonts/noto-cjk/raw/main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf
+          pyftsubset /tmp/noto.otf \
+            --unicodes="U+1100-11FF,U+302E-302F,U+3130-318F,U+A960-A97F,U+AC00-D7A3,U+D7B0-D7FF,U+25CC" \
+            --layout-features='*' --flavor=woff2 --output-file=public/fonts/jeongeum-hangul.woff2
+          ls -l public/fonts/jeongeum-hangul.woff2
       # the site lives under /chimera-jeongeum/, not at the domain root
       - run: bun run wasm && bunx vite build --base=/chimera-jeongeum/
       - uses: actions/upload-pages-artifact@v3

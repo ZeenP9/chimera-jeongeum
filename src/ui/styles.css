@@ -27,6 +27,16 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+@font-face {
+  /* 正音 (old Hangul): conjoining jamo composed into syllables. A Hangul-only subset of Noto Sans CJK KR
+     (SIL OFL), cut at build time by .github/workflows/pages.yml; absent in local dev (system font then). */
+  font-family: "Jeongeum Hangul";
+  src: url("/fonts/jeongeum-hangul.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+1100-11FF, U+302E-302F, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF;
+}
+
 :root {
   /* the vector-display palette (src/ui/colors.ts V): blue is the body, amber is sound,
      green/red/pink/white are the four control slots */
@@ -51,7 +61,7 @@
   --caliper-dim: rgba(255, 179, 64, 0.45);
   --radius-s: 0;
   --radius-m: 0;
-  --font: "Hershey", "Archivo", system-ui, -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+  --font: "Hershey", "Archivo", "Jeongeum Hangul", system-ui, -apple-system, "Segoe UI", "Noto Sans", sans-serif;
   color-scheme: dark;
 }
 
