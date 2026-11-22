@@ -65,9 +65,9 @@ const INITIALS: [char; 19] = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', '
 
 /// Medial vowels in Unicode order as (glide, vowel).
 const MEDIALS: [(&str, &str); 21] = [
-    ("", "a"), ("", "ɛ"), ("j", "a"), ("j", "ɛ"), ("", "ʌ"), ("", "e"), ("j", "ʌ"), ("j", "e"), // ㅏㅐㅑㅒㅓㅔㅕㅖ
-    ("", "o"), ("w", "a"), ("w", "ɛ"), ("w", "e"), ("j", "o"), // ㅗㅘㅙㅚㅛ
-    ("", "u"), ("w", "ʌ"), ("w", "e"), ("w", "i"), ("j", "u"), // ㅜㅝㅞㅟㅠ
+    ("", "a"), ("", "ɛ"), ("j", "a"), ("j", "ɛ"), ("", "ʌ"), ("", "e̞"), ("j", "ʌ"), ("j", "e̞"), // ㅏㅐㅑㅒㅓㅔㅕㅖ (正音: ㅔ=e̞)
+    ("", "o̞"), ("w", "a"), ("w", "ɛ"), ("", "ø̞"), ("j", "o̞"), // ㅗㅘㅙㅚㅛ (正音: ㅗ=o̞, ㅚ=ø̞ 단모음)
+    ("", "u"), ("w", "ʌ"), ("w", "e̞"), ("w", "i"), ("j", "u"), // ㅜㅝㅞㅟㅠ
     ("", "ɯ"), ("ɰ", "i"), ("", "i"), // ㅡㅢㅣ
 ];
 
@@ -303,7 +303,7 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
         out.push(Syllable {
             text: b.text.to_string(),
             onset,
-            nucleus: Segment::new(b.vowel),
+            nucleus: Segment::new(eo_vowel(b)),
             coda: b.coda.iter().map(|&c| Segment::new(coda_ipa(c))).collect(),
             melisma: None,
             word_end: i + 1 == blocks.len(),
@@ -312,6 +312,27 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
         });
     }
     out
+}
+
+/// 正音 규칙(로컬 시제품): 발음되는 초성이 공명음(ㄴ ㄹ ㅁ)이면 ㅡ·ㅓ가 한 단계 낮아진다.
+///   ㅡ : 공명음 뒤 [ɤ] (기본모음 15번), 그 밖의 자음 뒤 [ɯ] (기본모음 16번)
+///   ㅓ : 공명음 뒤 [ʌ] (기본모음 14번), 그 밖의 자음 뒤 [ɤ̞] (15번과 14번 사이)
+/// 값은 Seeing Speech 기본모음(J. Beck) 실측으로 보정한 ɯ̠ ɤ̠ ɤ̞ ʌ̠ (vowel_data.rs).
+/// 초성 없는 으·어(·여·워)는 ZERO_ONSET_SONORANT 에 따라 (사용자 확인 대기: 지금은 공명음 쪽).
+const ZERO_ONSET_SONORANT: bool = true;
+fn eo_vowel(b: &Block) -> &'static str {
+    let sonorant = match b.onset {
+        Some('ㄴ' | 'ㄹ' | 'ㅁ') => true,
+        Some(_) => false,
+        None => ZERO_ONSET_SONORANT,
+    };
+    match (b.vowel, sonorant) {
+        ("ʌ", true) => "ʌ̠",
+        ("ʌ", false) => "ɤ̞",
+        ("ɯ", true) => "ɤ̠",
+        ("ɯ", false) => "ɯ̠",
+        (v, _) => v,
+    }
 }
 
 /// The Korean front end: Hangul blocks, by the rules above (no data needed).

@@ -10,6 +10,7 @@ pub mod durations;
 pub mod english;
 pub mod inventory;
 pub mod ipa;
+pub mod jeongeum;
 pub mod korean;
 pub mod mandarin;
 pub mod planner;

@@ -13,6 +13,7 @@
 
 use crate::anatomy::human::BodyMix;
 use super::english::js_is_space;
+use super::jeongeum::Jeongeum;
 use super::korean::Korean;
 use super::mandarin::{Mandarin, MandarinLexicon, Pinyin};
 use super::russian::Russian;
@@ -343,7 +344,7 @@ pub enum Lang {
 /// through, so a new front end can't be missing from one of them.
 pub fn lyrics_in(text: &str, g2p: &impl WordSource, zh: &MandarinLexicon, lang: Lang) -> Vec<Syllable> {
     match lang {
-        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Korean, &Russian, &Mandarin(zh)]),
-        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Korean, &Russian, &Mandarin(zh)]),
+        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Jeongeum, &Korean, &Russian, &Mandarin(zh)]),
+        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Jeongeum, &Korean, &Russian, &Mandarin(zh)]),
     }
 }

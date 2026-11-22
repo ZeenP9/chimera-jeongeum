@@ -83,6 +83,24 @@ pub fn expand(ipa: &str) -> Option<&'static [&'static str]> {
         "ɚ" => &["ɝ"],
         // rising diphthongs: a short close glide into the main vowel (Mandarin's medials: 话 ua,
         // 天 iɛ, 学 yɛ), written as one nucleus so the glide sings on the beat, inside the note
+        // 正音 3성: ㅢ식 굴곡 — ɨ 활음이 주모음으로 미끄러진다 (로컬 시제품)
+        "ɨa" => &["ɨ", "a"],
+        "ɨɑ" => &["ɨ", "ɑ"],
+        "ɨə" => &["ɨ", "ə"],
+        "ɨɛ" => &["ɨ", "ɛ"],
+        "ɨe" => &["ɨ", "e"],
+        "ɨi" => &["ɨ", "i"],
+        "ɨu̠" => &["ɨ", "u̠"],
+        "ɨu" => &["ɨ", "u"],
+        "ɨy" => &["ɨ", "y"],
+        "ɨʅ" => &["ɨ", "ʅ"],
+        "ɨɿ" => &["ɨ", "ɿ"],
+        "ɨɤ" => &["ɨ", "ɤ"],
+        "ɨo" => &["ɨ", "o"],
+        "ɨɔ" => &["ɨ", "ɔ"],
+        "ɨʊ̠" => &["ɨ", "ʊ̠"],
+        "ɨəɝ" => &["ɨ", "ə", "ɝ"],
+        "ɨaɝ" => &["ɨ", "a", "ɝ"],
         "ia" => &["i", "a"],
         "iɛ" => &["i", "ɛ"],
         "iɑ" => &["i", "ɑ"],
@@ -123,7 +141,7 @@ pub fn expand(ipa: &str) -> Option<&'static [&'static str]> {
 
 /// A rising nucleus (a rising diphthong or a triphthong): its first part is a short glide.
 pub fn is_rising(ipa: &str) -> bool {
-    matches!(ipa, "ia" | "iɛ" | "iɑ" | "iʊ" | "ua" | "uo" | "uɑ" | "uə" | "yɛ" | "uɔ" | "əɝ" | "aɝ" | "iaʊ" | "iəʊ" | "uaɪ" | "ueɪ" | "u̠a" | "u̠ɔ" | "u̠ɑ" | "u̠ə" | "u̠aɪ" | "u̠eɪ" | "iʊ̠" | "iaʊ̠" | "iəʊ̠")
+    matches!(ipa, "ɨəɝ" | "ɨaɝ" | "ɨa" | "ɨɑ" | "ɨə" | "ɨɛ" | "ɨe" | "ɨi" | "ɨu̠" | "ɨu" | "ɨy" | "ɨʅ" | "ɨɿ" | "ɨɤ" | "ɨo" | "ɨɔ" | "ɨʊ̠" | "ia" | "iɛ" | "iɑ" | "iʊ" | "ua" | "uo" | "uɑ" | "uə" | "yɛ" | "uɔ" | "əɝ" | "aɝ" | "iaʊ" | "iəʊ" | "uaɪ" | "ueɪ" | "u̠a" | "u̠ɔ" | "u̠ɑ" | "u̠ə" | "u̠aɪ" | "u̠eɪ" | "iʊ̠" | "iaʊ̠" | "iəʊ̠")
 }
 
 /// A rising nucleus's on-glide (its first part), sung short at the note's start.

@@ -1,22 +1,7 @@
 name: plugin
 
 on:
-  push:
-    branches: [main, "t3/**"]
-    # a release: CI builds and tests it on each system, then publishes it (GitHub doesn't apply
-    # `paths` to tags)
-    tags: ["plugin-v*"]
-    paths:
-      - "crates/**"
-      - "src/**"
-      - "public/**"
-      - "index.html"
-      - "package.json"
-      - "bun.lock"
-      - "vite.config.ts"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/plugin.yml"
+  # fork: the three-OS plugin build runs only by hand (upstream runs it on push to main)
   pull_request:
   workflow_dispatch:
 

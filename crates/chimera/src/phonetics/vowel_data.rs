@@ -84,4 +84,30 @@ pub static VOWELS: &[VowelRef] = &[
     // (F1 / F2 / F3 Hz): male 422 / 765 / 2345, female 513 / 972 / 2859, child 555 / 1004 / 3360: F1 and F2 within
     // 5 % on every body (F3, weighted least in the fit, -14 to -19 % for the adults).
     vref("ʊ̠", "Mandarin ong (back ʊ)", [441.0, 730.0, 2881.0], Some([533.0, 945.0, 3314.0]), None, true, 0.2, 1.0),
+    // 正音 시제품(로컬): 엔진에 소리가 없던 중설·원순 모음. 측정값이 아니라 이 표의 이웃 모음을
+    // 높이·앞뒤 위치에 맞춰 보간한 임시 목표값 (남성; 여성·아동은 표준 배율). 실측(예: Seeing Speech
+    // 녹음)으로 바꿀 자리.
+    // ʉ: Seeing Speech 녹음 B_Central_close_round.mp4 (Janet Beck, 여성, F0 216 Hz) 0.30–1.25 s,
+    // LPC 14차 프레임 중앙값으로 측정한 여성값. 남성·아동은 이 표의 표준 배율로 환산.
+    vref("ʉ", "close central rounded (Seeing Speech, J. Beck)", [342.0, 1462.0, 1839.0], Some([400.0, 1755.0, 2115.0]), None, true, 0.0, 0.5),
+    vref("ʏ", "near-close near-front rounded (y–ø 보간)", [360.0, 1633.0, 2217.0], None, None, true, 0.2, 0.15),
+    vref("ɘ", "close-mid central unrounded (e–ɤ 보간)", [468.0, 1670.0, 2570.0], None, None, false, 0.33, 0.5),
+    vref("ɵ", "close-mid central rounded (ø–o 보간)", [444.0, 1230.0, 2355.0], None, None, true, 0.33, 0.55),
+    vref("ɜ", "open-mid central unrounded (ɛ–ʌ 보간)", [602.0, 1500.0, 2578.0], None, None, false, 0.58, 0.45),
+    vref("ɞ", "open-mid central rounded (œ–ɔ 보간)", [586.0, 1224.0, 2444.0], None, None, true, 0.6, 0.55),
+    // ɶ: Seeing Speech B_cardinal_12.mp4 (Janet Beck, 여성, F0 212 Hz) 0.2–0.75 s, LPC 11–13차가 일치한 값(12차 중앙값).
+    vref("ɶ", "open front rounded (Seeing Speech, J. Beck)", [585.0, 1288.0, 2404.0], Some([685.0, 1545.0, 2765.0]), None, true, 1.0, 0.2),
+    // 기본모음 후설형 (Seeing Speech, Janet Beck 여성, LPC 11–13차 일치값). 영어 ʌ(hud)·중국어 ɤ(e)와 겹치지 않게
+    // u̠처럼 U+0320 을 붙인 별도 키: 正音 처리기 전용.
+    vref("ɤ̠", "cardinal 15 close-mid back unrounded (B_cardinal_15)", [372.0, 896.0, 2187.0], Some([435.0, 1075.0, 2515.0]), None, false, 0.35, 1.0),
+    vref("ʌ̠", "cardinal 14 open-mid back unrounded (B_cardinal_14)", [509.0, 879.0, 2365.0], Some([595.0, 1055.0, 2720.0]), None, false, 0.6, 1.0),
+    // ɤ̞ (lowered ɤ, 후설 중모음): 기본모음 15번 ɤ와 14번 ʌ의 중간 — Beck 실측 두 값(435/1075/2515, 595/1055/2720)의 평균.
+    vref("ɤ̞", "mid back unrounded (cardinal 15–14 midpoint)", [440.0, 888.0, 2277.0], Some([515.0, 1065.0, 2618.0]), None, false, 0.48, 1.0),
+    vref("ɯ̠", "cardinal 16 close back unrounded (B_cardinal_16)", [325.0, 1217.0, 2226.0], Some([380.0, 1460.0, 2560.0]), None, false, 0.0, 1.0),
+    // 正音 시제품: 한국어 중모음(ㅔ ㅚ ㅗ). ◌̞ = 반폐모음과 반개모음의 중간 — Beck 기본모음 쌍 실측값의 평균
+    // (e 395/2530/3300 + ɛ 590/2075/2945, ø 395/2260/2760 + œ 545/1825/2850, o 410/845/2610 + ɔ 505/760/2960).
+    vref("e̞", "mid front unrounded (cardinal 2–3 midpoint)", [421.0, 1918.0, 2715.0], Some([492.0, 2302.0, 3122.0]), None, false, 0.48, 0.0),
+    vref("ø̞", "mid front rounded (cardinal 10–11 midpoint)", [402.0, 1702.0, 2439.0], Some([470.0, 2042.0, 2805.0]), None, true, 0.48, 0.1),
+    vref("o̞", "mid back rounded (cardinal 7–6 midpoint)", [391.0, 668.0, 2422.0], Some([458.0, 802.0, 2785.0]), None, true, 0.48, 1.0),
+    vref("ɑ̠", "cardinal 5 open back unrounded (B_cardinal_5)", [568.0, 829.0, 2565.0], Some([665.0, 995.0, 2950.0]), None, false, 1.0, 1.0),
 ];
