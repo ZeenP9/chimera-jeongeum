@@ -515,15 +515,16 @@ pub fn pinyin_to_jeongeum(py: &str) -> Option<&'static str> {
 }
 
 /// 성조를 正音 표기대로 노래의 음높이 굽이로 싣는다 (멜로디 음에서 반음 단위로):
-///   1성(경성 포함) 평평 · 2성 ㆁ = 아래에서 올라감 · 3성 ㅡ첨가 = ㅢ식 굴곡(ɨ 활음, 내려갔다 오름),
-///   3성 ㆆ = 하강 · 4성 = 크게 하강, 첫머리 ㆆ(二 ᅙᅥᆯ)는 [ʔ].
+///   1성(경성 포함) 평평 · 2성 ㆁ = 아래에서 올라감 · 4성 = 크게 하강, 첫머리 ㆆ(二 ᅙᅥᆯ)는 [ʔ].
+///   3성은 표기는 하나지만 소리는 자리에 따라: 구 끝(`last`)이면 온3성 214 — ㅡ첨가형은 ㅢ식 굴곡(ɨ 활음,
+///   내려갔다 오름), ㆆ형은 하강 — 이고, 구 안이면 반3성 21(내려가기만). 3성+3성 → 2성은 사전이 이미 바꿔 온다.
 /// [ʔ]는 正音 표기에 ㆆ가 있을 때만: 중국어 처리기가 초성 없는 음절에 붙이는 기본 [ʔ]는 뗀다.
-fn apply_tone(s: &mut Syllable, tone: u8, spelling: &str) {
+fn apply_tone(s: &mut Syllable, tone: u8, spelling: &str, last: bool) {
     s.onset.retain(|x| x.ipa != "ʔ");
     let bend = |at, len, max, st| Bend { at, len, max, st };
     match tone {
         2 => s.pitch = vec![bend(Edge::Start, 0.75, 0.6, -4.0)],
-        3 if spelling.contains('ᅙ') => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
+        3 if !last || spelling.contains('ᅙ') => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
         3 => {
             let glide = format!("ɨ{}", s.nucleus.ipa);
             if super::planner::expand(&glide).is_some() {
@@ -568,7 +569,7 @@ impl FrontEnd for JeongeumHan<'_> {
             if n == 1 && !spelling.is_empty() {
                 s.text = spelling.to_string();
             }
-            apply_tone(s, tone, spelling);
+            apply_tone(s, tone, spelling, i + n >= cs.len());
             i += n;
         }
         syls
