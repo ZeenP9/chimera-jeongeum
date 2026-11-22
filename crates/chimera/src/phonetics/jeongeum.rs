@@ -310,6 +310,25 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
     if let Some(c) = whole {
         return Some(Syllable { text: w.text.clone(), onset: vec![Segment::new(c)], nucleus: Segment::new(""), ..Default::default() });
     }
+    // 떨어진 ㅡ: ㅡ 와 다음 모음을 두 글자로 이어 쓴 것(ᄀ+ᅳ+ᅡ)은 ㅡ 가 앞 자음의 유성 표지다 — ᄀ g · ᄃ d · ᄇ b
+    //   (사용자 지정: 획이 닿지 않은 ㅢ 는 [그+ㅣ] = [gi], 닿은 결합모음 긔·ᄀힹ 은 목젖음 [ɢi]·[ɢa]).
+    //   일본어 탁음 が ᄀ+ᅳ+ᅡ [ga], ぎ ᄀ+ᅳ+ᅵ [gi], だ ᄃ+ᅳ+ᅡ [da].
+    if let Some(l @ ('ᄀ' | 'ᄃ' | 'ᄇ')) = w.lead
+        && let ['ᅳ', rest @ ..] = w.vowel.as_slice()
+        && !rest.is_empty()
+    {
+        let (glide, nucleus) = vowel(rest, false)?;
+        let mut on = vec![Segment::new(match l {
+            'ᄀ' => "g",
+            'ᄃ' => "d",
+            _ => "b",
+        })];
+        if !glide.is_empty() {
+            on.push(Segment::new(glide));
+        }
+        let cd = w.tail.iter().filter_map(|&t| coda(t)).map(Segment::new).collect();
+        return Some(Syllable { text: w.text.clone(), onset: on, nucleus: Segment::new(nucleus), coda: cd, ..Default::default() });
+    }
     // ㄲ ㄱ ㅋ ㅎ + ㅡ 결합 모음 (ᄁힹ = [qa]): ㅡ는 자음에 흡수되어 목젖 자음 q ɢ qʰ χ 가 되고 나머지 모음이 남는다.
     //   ힹ→ㅏ ힺ→ㅓ ힻ→ㅔ ힼ→ㅗ ᆕ→ㅜ ㅢ→ㅣ. ㅡ 단독(그 끄)은 목젖 규칙을 받지 않는다 (그 = [kɯ]).
     if let Some(l @ ('ᄁ' | 'ᄀ' | 'ᄏ' | 'ᄒ')) = w.lead
