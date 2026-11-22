@@ -331,19 +331,26 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
     }
     // ㄲ ㄱ ㅋ ㅎ + ㅡ 결합 모음 (ᄁힹ = [qa]): ㅡ는 자음에 흡수되어 목젖 자음 q ɢ qʰ χ 가 되고 나머지 모음이 남는다.
     //   ힹ→ㅏ ힺ→ㅓ ힻ→ㅔ ힼ→ㅗ ㅢ→ㅣ. ㅡ 단독(그 끄)과 ᆕ(= ʉ)는 목젖 규칙을 받지 않는다 (그 = [kɯ]; ᄀᆕ 는 위에서 [gʉ]).
-    // ᄀ·ᄇ + ᆕ = [gʉ]·[bʉ]: ᆕ 속의 ㅡ 가 앞 자음을 유성으로 (일본어 ぐ ぶ, 사용자 지정).
-    // ᄁᆕ [k˭ʉ] · ᄏᆕ [kʰʉ] 는 무성 그대로
-    if let Some(l @ ('ᄀ' | 'ᄇ')) = w.lead
+    // ᄀ·ᄃ·ᄇ + ᆕ = [gʉ]·[dʉ]·[bʉ]: ᆕ 속의 ㅡ 가 앞 자음을 유성으로 (일본어 ぐ ぶ, 사용자 지정).
+    // ᄁᆕ [k˭ʉ] · ᄏᆕ [kʰʉ] 는 무성 그대로. 받침 ㅿ 가 붙은 ᄃ 는 치 마찰음 규칙(ᄃᆕᇫ = ðʉ)으로
+    if let Some(l @ ('ᄀ' | 'ᄃ' | 'ᄇ')) = w.lead
         && w.vowel == ['ᆕ']
+        && !(l == 'ᄃ' && w.tail.contains(&'ᇫ'))
     {
         let cd = w.tail.iter().filter_map(|&t| coda(t)).map(Segment::new).collect();
-        let c = if l == 'ᄀ' { "g" } else { "b" };
+        let c = match l {
+            'ᄀ' => "g",
+            'ᄃ' => "d",
+            _ => "b",
+        };
         return Some(Syllable { text: w.text.clone(), onset: vec![Segment::new(c)], nucleus: Segment::new("ʉ"), coda: cd, ..Default::default() });
     }
-    // ᄇ + 붙은 ㅡ결합모음 (ᄇힹ ᄇힻ ᄇힼ) = 유성 [b] + 남은 모음: ㅂ 에는 목젖 짝이 없어 ㅡ 는 유성 표지로만 읽는다
-    // (일본어 ば べ ぼ 를 이렇게 적어도 [b], 사용자 지정). 떨어진 ㅡ(ᄇ+ᅳ+ᅡ)와 같은 소리.
-    // び 는 떨어진 [브+ㅣ](ᄇ+ᅳ+ᅵ)로 적는다 — 붙은 ᄇ+ㅢ 는 다른 소리라 이 규칙에서 뺀다 (사용자 지정)
-    if w.lead == Some('ᄇ')
+    // ᄃ·ᄇ + 붙은 ㅡ결합모음 (ᄃힹ ᄃힻ ᄃힼ, ᄇힹ ᄇힻ ᄇힼ) = 유성 [d]·[b] + 남은 모음: ㄷ ㅂ 에는 목젖 짝이 없어 ㅡ 는
+    // 유성 표지로만 읽는다 (책: 그 g · 드 d · 브 b; 일본어 だ で ど ば べ ぼ, 사용자 지정). 떨어진 ㅡ(ᄃ+ᅳ+ᅡ)와 같은 소리.
+    // び 는 떨어진 [브+ㅣ](ᄇ+ᅳ+ᅵ)로 적는다 — 붙은 ㅂ+ㅢ 는 다른 소리라 뺀다 (사용자 지정; ㄷ+ㅢ 도 같이 뺀다).
+    // 받침 ㅿ 가 붙으면 ᄃ 는 치 마찰음 규칙(ᄃힹᇫ = ða)을 따른다.
+    if let Some(l @ ('ᄃ' | 'ᄇ')) = w.lead
+        && !(l == 'ᄃ' && w.tail.contains(&'ᇫ'))
         && let [first, rest @ ..] = w.vowel.as_slice()
         && *first != 'ᅴ'
         && let Some(base) = eu_base(*first)
@@ -351,7 +358,7 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
         let mut v = vec![base];
         v.extend_from_slice(rest);
         let (glide, nucleus) = vowel(&v, false)?;
-        let mut on = vec![Segment::new("b")];
+        let mut on = vec![Segment::new(if l == 'ᄃ' { "d" } else { "b" })];
         if !glide.is_empty() {
             on.push(Segment::new(glide));
         }
