@@ -63,11 +63,26 @@ fn jamo(word: &str) -> Vec<char> {
         } else if let Some(t) = compat_tail(c).filter(|_| out.last().is_some_and(|&p| is_vowel_jamo(p) || is_tail(p))) {
             // 입력기로 칠 수 없는 받침의 대체 입력: 음절 바로 뒤의 낱자 ㆆ ㅿ ㆁ ㅱ 은 받침으로 읽는다 (간ㆆ = 간ᇹ)
             out.push(t);
+        } else if let Some(l) = compat_lead(c) {
+            // 호환 자모 낱자 (ㅸ ㄱ, 자판으로 치면 나오는 꼴): 초성으로
+            out.push(l);
         } else {
             out.push(c);
         }
     }
     out
+}
+
+/// 호환 자모 자음 → 초성 자모 (겹받침 꼴 ㄳ ㄵ … 은 초성이 없어 제외)
+fn compat_lead(c: char) -> Option<char> {
+    let l = match c {
+        'ㄱ' => 'ᄀ', 'ㄲ' => 'ᄁ', 'ㄴ' => 'ᄂ', 'ㄷ' => 'ᄃ', 'ㄸ' => 'ᄄ', 'ㄹ' => 'ᄅ', 'ㅁ' => 'ᄆ',
+        'ㅂ' => 'ᄇ', 'ㅃ' => 'ᄈ', 'ㅅ' => 'ᄉ', 'ㅆ' => 'ᄊ', 'ㅇ' => 'ᄋ', 'ㅈ' => 'ᄌ', 'ㅉ' => 'ᄍ',
+        'ㅊ' => 'ᄎ', 'ㅋ' => 'ᄏ', 'ㅌ' => 'ᄐ', 'ㅍ' => 'ᄑ', 'ㅎ' => 'ᄒ', 'ㅥ' => 'ᄔ', 'ㅱ' => 'ᄝ',
+        'ㅸ' => 'ᄫ', 'ㅹ' => 'ᄬ', 'ㅿ' => 'ᅀ', 'ㆁ' => 'ᅌ', 'ㆄ' => 'ᅗ', 'ㆅ' => 'ᅘ', 'ㆆ' => 'ᅙ',
+        _ => return None,
+    };
+    Some(l)
 }
 
 /// 낱자(호환용 자모) → 받침 자모: 입력기에서 옛 받침을 칠 수 없을 때 음절 뒤에 붙여 쓰는 대체 입력.
@@ -337,6 +352,11 @@ fn syllable(w: &Written) -> Option<Syllable> {
 }
 
 fn syllable_oral(w: &Written) -> Option<Syllable> {
+    // 홀로 쓴 자음 낱자 (ㅸ, ᄀ): 정음에서는 ᅙᆞ 의 모음 [ə] 를 붙여 읽는다 (ㅸ = [βə])
+    if w.vowel.is_empty() && w.tail.is_empty() && let Some(l) = w.lead {
+        let (ipa, a, v) = onset(l)?;
+        return Some(Syllable { text: w.text.clone(), onset: vec![Segment { aspirated: a, vot: v, ..Segment::new(ipa) }], nucleus: Segment::new("ə"), ..Default::default() });
+    }
     // 모음 없이 종성만 있는 음절: 성절 자음 (ᅟᅠᆫ = 嗯 n, ᅟᅠᆼ = ng, ᅟᅠᇢ = 呣 m 을 ㅱ=[ʋ]로)
     if w.vowel.is_empty() && let Some((first, rest)) = w.tail.split_first() {
         let nucleus = coda(*first)?;
@@ -676,10 +696,10 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
 
 impl FrontEnd for Jeongeum {
     fn starts(&self, c: char) -> bool {
-        is_block(c) || is_conjoining(c)
+        is_block(c) || is_conjoining(c) || compat_lead(c).is_some()
     }
     fn continues(&self, c: char) -> bool {
-        is_block(c) || is_conjoining(c) || compat_tail(c).is_some()
+        is_block(c) || is_conjoining(c) || compat_tail(c).is_some() || compat_lead(c).is_some()
     }
     /// 정음은 한글의 상위호환이고 표음 표기: 모든 한글을 쓴 대로 읽는다 (국물 = [국.물], 이어 읽으면 궁물로 적음).
     /// 형태주의 맞춤법(먹어 → 머거)을 발음으로 바꾸는 일은 이 처리기가 아니라 한글→정음 변환의 몫이다.
