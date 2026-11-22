@@ -331,10 +331,30 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
     }
     // ㄲ ㄱ ㅋ ㅎ + ㅡ 결합 모음 (ᄁힹ = [qa]): ㅡ는 자음에 흡수되어 목젖 자음 q ɢ qʰ χ 가 되고 나머지 모음이 남는다.
     //   ힹ→ㅏ ힺ→ㅓ ힻ→ㅔ ힼ→ㅗ ㅢ→ㅣ. ㅡ 단독(그 끄)과 ᆕ(= ʉ)는 목젖 규칙을 받지 않는다 (그 = [kɯ]; ᄀᆕ 는 위에서 [gʉ]).
-    // ᄀ + ᆕ = [gʉ]: ᆕ 속의 ㅡ 가 앞 ㄱ 을 유성으로 (일본어 ぐ, 사용자 지정). ᄁᆕ [k˭ʉ] · ᄏᆕ [kʰʉ] 는 무성 그대로
-    if w.lead == Some('ᄀ') && w.vowel == ['ᆕ'] {
+    // ᄀ·ᄇ + ᆕ = [gʉ]·[bʉ]: ᆕ 속의 ㅡ 가 앞 자음을 유성으로 (일본어 ぐ ぶ, 사용자 지정).
+    // ᄁᆕ [k˭ʉ] · ᄏᆕ [kʰʉ] 는 무성 그대로
+    if let Some(l @ ('ᄀ' | 'ᄇ')) = w.lead
+        && w.vowel == ['ᆕ']
+    {
         let cd = w.tail.iter().filter_map(|&t| coda(t)).map(Segment::new).collect();
-        return Some(Syllable { text: w.text.clone(), onset: vec![Segment::new("g")], nucleus: Segment::new("ʉ"), coda: cd, ..Default::default() });
+        let c = if l == 'ᄀ' { "g" } else { "b" };
+        return Some(Syllable { text: w.text.clone(), onset: vec![Segment::new(c)], nucleus: Segment::new("ʉ"), coda: cd, ..Default::default() });
+    }
+    // ᄇ + 붙은 ㅡ결합모음 (ᄇힹ 븨 ᄇힻ ᄇힼ) = 유성 [b] + 남은 모음: ㅂ 에는 목젖 짝이 없어 ㅡ 는 유성 표지로만 읽는다
+    // (일본어 ば び べ ぼ 를 이렇게 적어도 [b], 사용자 지정). 떨어진 ㅡ(ᄇ+ᅳ+ᅡ)와 같은 소리
+    if w.lead == Some('ᄇ')
+        && let [first, rest @ ..] = w.vowel.as_slice()
+        && let Some(base) = eu_base(*first)
+    {
+        let mut v = vec![base];
+        v.extend_from_slice(rest);
+        let (glide, nucleus) = vowel(&v, false)?;
+        let mut on = vec![Segment::new("b")];
+        if !glide.is_empty() {
+            on.push(Segment::new(glide));
+        }
+        let cd = w.tail.iter().filter_map(|&t| coda(t)).map(Segment::new).collect();
+        return Some(Syllable { text: w.text.clone(), onset: on, nucleus: Segment::new(nucleus), coda: cd, ..Default::default() });
     }
     // ᆕ(ㅡ+ㅜ = ʉ)는 예외: 그 자체가 모음 [ʉ]라 목젖음 규칙을 받지 않는다 (ᄀᆕ ᄏᆕ ᄒᆕ = 일본어 ぐ く ふ, 사용자 지정)
     if let Some(l @ ('ᄁ' | 'ᄀ' | 'ᄏ' | 'ᄒ')) = w.lead
