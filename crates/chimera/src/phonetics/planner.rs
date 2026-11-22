@@ -76,6 +76,8 @@ pub fn vowel_table() -> &'static VowelTable {
 pub fn expand(ipa: &str) -> Option<&'static [&'static str]> {
     Some(match ipa {
         "aɪ" => &["a", "ɪ"],
+        // 正音 ㆎ (ㆍ+ㅣ): 뒤 a 에서 ɪ 로 (사용자 지정)
+        "ɑɪ" => &["ɑ", "ɪ"],
         "aʊ" => &["a", "ʊ"],
         "ɔɪ" => &["ɔ", "ɪ"],
         "eɪ" => &["e", "i"],
