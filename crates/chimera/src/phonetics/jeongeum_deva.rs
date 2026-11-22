@@ -7,7 +7,8 @@
 //! - 무성 무기 ㄲ ᄍ ㄸ ㄸ+ᇫ ㅃ, 무성 유기 ㅋ ㅊ ㅌ ㅌ+ᇫ ㅍ, 유성 무기 ㄱ ㅈ ㄷ ㄷ+ᇫ ㅂ,
 //!   유성 유기는 ㅡ 를 뒤에 품은 결합모음: घ ᄀᅼ · झ ᄌᅼ · ढ ᄃᅼᇫ · ध ᄃᅼ · भ ᄇᅼ (i 앞 ᆜ, ā 앞 ᆣ, u 앞 ᆖ).
 //! - 권설음은 받침 ㅿ (ट 떠ᇫ, ष 셔ᇫ), ś 셔, s 써, h ㅎ, 비음 ङ ㆁ · ञ ㄴ · ण ㄴ+ᇫ · न ㄴ · म ㅁ, y ㅇ+j, r ㄹ, l ㄹ, v ㅸ.
-//! - 모음: a ㅓ, ā ퟅ(ㆍ+ㅏ), i ㅣ, ī ퟄ(ㅣ+ㅣ), u ㅜ, ū ᆍ(ㅜ+ㅜ), e ㅔ, o ㅗ, ai ㆎ, au ᆠ, ṛ 리.
+//! - 모음: a ㅓ, ā ㅏ, i·ī ㅣ, u·ū ㅜ, e ㅔ, o ㅗ, ai ㆎ, au ᆠ, ṛ 리 — 책의 실제 표기(간ᄃᆜ, 써마ᄃᆜ, 빠러미ᇹ따)대로
+//!   길이는 적지 않는다 (ퟅ ퟄ ᆍ 로 장단을 기계적으로 가르는 표기도 책에 있으나 쓰지 않음, 사용자 지정).
 //! - anusvāra ं 는 받침 ㆁ/ㄴ/ㅁ (뒤 자음의 자리에 맞춰), visarga ः 는 받침 ㅎ, candrabindu ँ 는 비모음.
 //! - 자음 연결(virāma ्): 앞 음절이 있으면 그 받침으로, 아니면 ㅡ 를 붙인 한 음절(끄).
 //!
@@ -68,7 +69,7 @@ fn cons(c: char) -> Option<Cons> {
         'भ' => k('ᄇ', false, true, "b", None, Some('ᆸ')),
         'म' => k('ᄆ', false, false, "m", None, Some('ᆷ')),
         'य' => Cons { palatal_vowel: true, ..k('ᄋ', false, false, "j", None, None) },
-        'र' => k('ᄅ', false, false, "ɾ", None, Some('ᆯ')),
+        'र' => k('ᄅ', false, false, "ɾ", None, Some('ᇙ')), // 받침 r: 책 까ᇙ마 (karma)
         'ल' => k('ᄅ', false, false, "l", None, Some('ᆯ')),
         'व' => k('ᄫ', false, false, "ʋ", None, None),
         'श' => Cons { palatal_vowel: true, ..k('ᄉ', false, false, "ɕ", None, Some('ᆺ')) },
@@ -83,11 +84,11 @@ fn cons(c: char) -> Option<Cons> {
 fn vowel_of(c: Option<char>) -> Option<(char, &'static str, bool)> {
     Some(match c {
         None | Some('अ') => ('ᅥ', "ɐ", false),
-        Some('ा' | 'आ') => ('\u{D7C5}', "a", true),
+        Some('ा' | 'आ') => ('ᅡ', "a", true),
         Some('ि' | 'इ') => ('ᅵ', "i", false),
-        Some('ी' | 'ई') => ('\u{D7C4}', "i", true),
+        Some('ी' | 'ई') => ('ᅵ', "i", true),
         Some('ु' | 'उ') => ('ᅮ', "u", false),
-        Some('ू' | 'ऊ') => ('\u{118D}', "u", true),
+        Some('ू' | 'ऊ') => ('ᅮ', "u", true),
         Some('े' | 'ए') => ('ᅦ', "e", true),
         Some('ै' | 'ऐ') => ('\u{11A1}', "aɪ", true),
         Some('ो' | 'ओ') => ('ᅩ', "o", true),
@@ -109,7 +110,7 @@ fn murmur_vowel(v: char) -> char {
     match v {
         'ᅥ' => 'ᅼ',
         'ᅵ' => 'ᆜ',
-        '\u{D7C5}' => 'ᆣ',
+        'ᅡ' => 'ᆣ',
         'ᅮ' => 'ᆖ',
         other => other,
     }
@@ -119,8 +120,8 @@ fn murmur_vowel(v: char) -> char {
 fn palatal(v: char) -> char {
     match v {
         'ᅥ' => 'ᅧ',
-        '\u{D7C5}' | 'ᅡ' => 'ᅣ',
-        'ᅮ' | '\u{118D}' => 'ᅲ',
+        'ᅡ' => 'ᅣ',
+        'ᅮ' => 'ᅲ',
         'ᅩ' => 'ᅭ',
         other => other,
     }
@@ -146,6 +147,10 @@ struct Syl {
     vowel: (char, &'static str, bool),
     tail: Vec<(Option<char>, Segment)>,
     nasal_vowel: bool,
+    /// visarga ः: 모음 뒤 ㅎ+같은 모음 한 블록 (शक्तिः 샼티히)
+    visarga: bool,
+    /// 낱말 끝이 아닌 짧은 i: 받침 ㆆ (पारमिता 빠러미ᇹ따, बोधिसत्त्व 보ᄃᆜᇹ싿ᄫᅡ)
+    short_i_inside: bool,
 }
 
 pub struct JeongeumDeva;
@@ -191,18 +196,18 @@ impl FrontEnd for JeongeumDeva {
                     }
                 }
                 onset.push(k);
-                syls.push(Syl { onset, vowel: v, tail: Vec::new(), nasal_vowel: false });
+                syls.push(Syl { onset, vowel: v, tail: Vec::new(), nasal_vowel: false, visarga: false, short_i_inside: false });
             } else if is_independent_vowel(c) {
                 i += 1;
                 let Some(v) = vowel_of(Some(c)) else { continue };
-                syls.push(Syl { onset: std::mem::take(&mut pending), vowel: v, tail: Vec::new(), nasal_vowel: false });
+                syls.push(Syl { onset: std::mem::take(&mut pending), vowel: v, tail: Vec::new(), nasal_vowel: false, visarga: false, short_i_inside: false });
             } else if c == ANUSVARA {
                 i += 1;
                 // 뒤 자음의 자리에 맞춘 비음 받침 (ङ्क 류), 마찰음·ह·끝 앞은 비모음
                 let next = cs.get(i).copied().and_then(cons);
                 if let Some(prev) = syls.last_mut() {
                     match next.as_ref().map(|n| n.ipa) {
-                        Some("k" | "g" | "ŋ") => prev.tail.push((Some('ᆼ'), Segment::new("ŋ"))),
+                        Some("k" | "g" | "ŋ") => prev.tail.push((Some('ᇰ'), Segment::new("ŋ"))), // 책: 고호ᇰᄀᆣ
                         Some("p" | "b" | "m") => prev.tail.push((Some('ᆷ'), Segment::new("m"))),
                         Some("tɕ" | "dʑ" | "ɲ" | "ʈ" | "ɖ" | "ɳ" | "t" | "d" | "n") => prev.tail.push((Some('ᆫ'), Segment::new("n"))),
                         _ => {
@@ -214,7 +219,8 @@ impl FrontEnd for JeongeumDeva {
             } else if c == VISARGA {
                 i += 1;
                 if let Some(prev) = syls.last_mut() {
-                    prev.tail.push((Some('ᇂ'), Segment::new("h")));
+                    prev.visarga = true;
+                    prev.tail.push((None, Segment::new("h")));
                 }
             } else if c == CANDRABINDU {
                 i += 1;
@@ -231,16 +237,44 @@ impl FrontEnd for JeongeumDeva {
                 prev.tail.push((p.tail, Segment { aspirated: p.asp, ..Segment::new(p.ipa) }));
             }
         }
+        // 책: 짧은 i 뒤 무성 자음 앞에서만 ㆆ (빠러미ᇹ따, 보ᄃᆜᇹ싿, 바후띠ᇹ꺼; ᄫᅵ베더 는 없음)
+        let next_voiceless: Vec<bool> = (0..syls.len())
+            .map(|j| {
+                syls.get(j + 1).and_then(|n| n.onset.first()).is_some_and(|k| {
+                    matches!(k.ipa.chars().next(), Some('k' | 't' | 'p' | 's' | 'ɕ' | 'ʂ' | 'ʈ'))
+                })
+            })
+            .collect();
+        for (j, s) in syls.iter_mut().enumerate() {
+            s.short_i_inside = s.vowel.1 == "i" && !s.vowel.2 && s.vowel.0 == 'ᅵ' && s.tail.is_empty() && next_voiceless[j];
+        }
         syls.into_iter().map(render).collect()
     }
 }
 
 fn render(s: Syl) -> Syllable {
     let (mut vj, vipa, long) = s.vowel;
+    let plain_v = vj;
     let main = s.onset.last();
+    // 유성 유기음 + 2모라 모음(ū o ai au): ㅎ 를 다시 살려 뒤에 한 블록 (भूमि 부후.미, भौतिक 바후.띠꺼, घो 고호;
+    // 책). ā ī i a 는 ㅡ 결합모음(ᆣ ᆜ ᅼ)에 수납, e 는 숨을 적지 않는다 (विभेद ᄫᅵ베더)
+    let mut revived: Option<char> = None;
     if let Some(k) = main {
         if k.murmur {
-            vj = murmur_vowel(vj);
+            match (vj, long) {
+                ('ᅮ', true) => revived = Some('ᅮ'),
+                ('ᅩ', _) => revived = Some('ᅩ'),
+                ('\u{11A1}', _) => {
+                    vj = 'ᅡ';
+                    revived = Some('ᅵ');
+                }
+                ('\u{11A0}', _) => {
+                    vj = 'ᅡ';
+                    revived = Some('ᅮ');
+                }
+                ('ᅦ', _) => {}
+                _ => vj = murmur_vowel(vj),
+            }
         }
         if k.palatal_vowel {
             vj = palatal(vj);
@@ -261,15 +295,40 @@ fn render(s: Syl) -> Syllable {
     let vj = if vocalic_r { 'ᅵ' } else { vj };
     let mut block = format!("{lead}{vj}");
     let retro = main.is_some_and(|k| k.retro);
-    for (t, _) in &s.tail {
-        if let Some(t) = t {
-            block.push(*t);
-        }
-    }
     if retro {
         block.push('ᇫ');
     }
-    text.push_str(&compose(&block));
+    // 받침 (같은 자음이 겹치면 하나만: त्त 싿) — ㅎ 를 살린 블록이 있으면 그 블록에 (고호ᇰ)
+    let mut tails: Vec<char> = Vec::new();
+    for t in s.tail.iter().filter_map(|(t, _)| *t) {
+        if tails.last() != Some(&t) {
+            tails.push(t);
+        }
+    }
+    let mut last_block = match revived {
+        Some(r) => {
+            text.push_str(&compose(&block));
+            format!("ᄒ{r}")
+        }
+        None => block,
+    };
+    last_block.extend(tails);
+    if s.short_i_inside {
+        last_block.push('ᇹ');
+    }
+    text.push_str(&compose(&last_block));
+    if s.visarga {
+        // ḥ: 직전 모음에 ㅎ (iḥ 히, uḥ 후, aḥ 허)
+        let v = match plain_v {
+            'ᅵ' => 'ᅵ',
+            'ᅮ' => 'ᅮ',
+            'ᅦ' | '\u{11A1}' => 'ᅦ',
+            'ᅩ' | '\u{11A0}' => 'ᅩ',
+            'ᅡ' => 'ᅡ',
+            _ => 'ᅥ',
+        };
+        text.push_str(&compose(&format!("ᄒ{v}")));
+    }
     // 소리
     let onset: Vec<Segment> = s
         .onset
@@ -284,7 +343,7 @@ fn render(s: Syl) -> Syllable {
         vipa
     };
     let coda: Vec<Segment> = s.tail.into_iter().map(|(_, seg)| seg).filter(|seg| !seg.ipa.is_empty()).collect();
-    // 긴 모음은 노래에서 음표가 길이를 정하므로 소리값은 같고, 글자(퍄 ᆍ ퟄ)로만 구분한다
+    // 긴 모음은 노래에서 음표가 길이를 정하므로 소리값은 짧은 모음과 같다
     let _ = long;
     let nucleus = Segment { nasalized: s.nasal_vowel.then_some(true), ..Segment::new(vipa) };
     Syllable { text, onset, nucleus, coda, ..Default::default() }
