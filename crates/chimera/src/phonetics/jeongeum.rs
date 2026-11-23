@@ -740,7 +740,44 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
         }
         i += 1;
     }
+    for s in &mut syls {
+        if let Some(k) = beck(&s.nucleus.ipa) {
+            s.nucleus.ipa = k.into();
+        }
+    }
     syls
+}
+
+/// Typed 正音's vowels sound with Janet Beck's cardinal-vowel targets (vowel_data.rs), one speaker
+/// for the whole chart, so its order holds (사용자 지정 2026-11-23). English keeps the plain keys
+/// (Hillenbrand); 正音 takes the marked ones. Vowels already 正音's own (e̞ o̞ ø̞ ɤ̞ ʉ ɶ ʏ ɘ ɵ ɜ ɞ)
+/// need no mapping. Diphthongs other than ㆎ (ɨa ɨe yɛ, the 3rd-tone glides) still use the plain keys.
+pub fn beck(ipa: &str) -> Option<&'static str> {
+    Some(match ipa {
+        "i" => "i\u{359}",
+        "y" => "y\u{359}",
+        "ɨ" => "ɨ\u{359}",
+        "u" => "u\u{359}",
+        "ɪ" => "ɪ\u{359}",
+        "ʊ" => "ʊ\u{359}",
+        "e" => "e\u{359}",
+        "ø" => "ø\u{359}",
+        "o" => "o\u{359}",
+        "ə" => "ə\u{359}",
+        "ɛ" => "ɛ\u{359}",
+        "œ" => "œ\u{359}",
+        "ɔ" => "ɔ\u{359}",
+        "a" => "a\u{359}",
+        "ɒ" => "ɒ\u{359}",
+        "æ" => "æ\u{359}",
+        "ɐ" => "ɐ\u{359}",
+        "ɑ" => "ɑ̠",
+        "ɯ" => "ɯ̠",
+        "ɤ" => "ɤ̠",
+        "ʌ" => "ʌ̠",
+        "ɑɪ" => "ɑ̠ɪ\u{359}",
+        _ => return None,
+    })
 }
 
 impl FrontEnd for Jeongeum {

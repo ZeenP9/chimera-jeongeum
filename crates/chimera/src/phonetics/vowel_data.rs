@@ -84,28 +84,64 @@ pub static VOWELS: &[VowelRef] = &[
     // (F1 / F2 / F3 Hz): male 422 / 765 / 2345, female 513 / 972 / 2859, child 555 / 1004 / 3360: F1 and F2 within
     // 5 % on every body (F3, weighted least in the fit, -14 to -19 % for the adults).
     vref("ʊ̠", "Mandarin ong (back ʊ)", [441.0, 730.0, 2881.0], Some([533.0, 945.0, 3314.0]), None, true, 0.2, 1.0),
-    // 正音 시제품(로컬): 엔진에 소리가 없던 중설·원순 모음. 측정값이 아니라 이 표의 이웃 모음을
-    // 높이·앞뒤 위치에 맞춰 보간한 임시 목표값 (남성; 여성·아동은 표준 배율). 실측(예: Seeing Speech
-    // 녹음)으로 바꿀 자리.
-    // ʉ: Seeing Speech 녹음 B_Central_close_round.mp4 (Janet Beck, 여성, F0 216 Hz) 0.30–1.25 s,
-    // LPC 14차 프레임 중앙값으로 측정한 여성값. 남성·아동은 이 표의 표준 배율로 환산.
+    // 正音's vowels (fork): one speaker, one session, so the chart's order holds. Janet Beck's cardinal
+    // vowels on Seeing Speech (seeingspeech.ac.uk, IPA chart 4, the ultrasound session's audio),
+    // measured 2026-11-23: female voice, F0 208-216 Hz; LPC orders 11-15 at 11025 Hz on the middle
+    // half of the held vowel, median over frames and orders. Female values as measured; male = female
+    // × (0.855, 0.833, 0.87), the ratio the earlier rows here used; child by the table's scaling.
+    // ɪ ʊ have no ultrasound take: their MRI takes, scaled by the MRI→studio ratio of the cardinal
+    // vowels that have both (front F1 0.94 F2 0.91 F3 0.92, back F1 0.94 F2 0.97). o's F3 is the
+    // least sure (orders disagree, 2815-3830). F1 is near F0 for the close vowels.
+    // Keys: a 正音 vowel whose plain IPA key holds English (Hillenbrand) data takes U+0359 (◌͙),
+    // or the earlier U+0320 (ɯ̠ ɤ̠ ʌ̠ ɑ̠); `jeongeum::beck` maps typed 正音 onto these. English is
+    // untouched. Checked by tests/jeongeum.rs: F1 rises down each column of the chart.
+    vref("i͙", "cardinal 1 (B_cardinal_1)", [200.0, 2130.0, 3195.0], Some([235.0, 2555.0, 3670.0]), None, false, 0.0, 0.0),
+    vref("y͙", "cardinal 9 (B_cardinal_9)", [195.0, 1910.0, 2335.0], Some([230.0, 2290.0, 2685.0]), None, true, 0.0, 0.05),
+    vref("ɨ͙", "close central unrounded (B_Central_close_unround)", [295.0, 1760.0, 2045.0], Some([345.0, 2110.0, 2350.0]), None, false, 0.0, 0.5),
+    vref("u͙", "cardinal 8 (B_cardinal_8)", [255.0, 690.0, 2470.0], Some([300.0, 830.0, 2840.0]), None, true, 0.0, 1.0),
+    vref("ɪ͙", "near-close front (MRI_front_close_float_vowel, ×MRI→studio)", [365.0, 1960.0, 2535.0], Some([425.0, 2355.0, 2915.0]), None, false, 0.15, 0.1),
+    vref("ʊ͙", "near-close back (MRI_back_close_float_vowel, ×MRI→studio)", [350.0, 865.0, 2280.0], Some([410.0, 1040.0, 2620.0]), None, true, 0.15, 0.9),
+    vref("e͙", "cardinal 2 (B_cardinal_2)", [345.0, 2035.0, 2980.0], Some([405.0, 2445.0, 3425.0]), None, false, 0.33, 0.0),
+    vref("ø͙", "cardinal 10 (B_cardinal_10)", [340.0, 1885.0, 2410.0], Some([400.0, 2260.0, 2770.0]), None, true, 0.33, 0.05),
+    vref("o͙", "cardinal 7 (B_cardinal_7)", [350.0, 705.0, 2635.0], Some([410.0, 845.0, 3030.0]), None, true, 0.33, 1.0),
+    vref("ə͙", "schwa (B_schwa)", [510.0, 1360.0, 2345.0], Some([595.0, 1630.0, 2695.0]), None, false, 0.5, 0.5),
+    vref("ɛ͙", "cardinal 3 (B_cardinal_3)", [530.0, 1730.0, 2570.0], Some([620.0, 2075.0, 2955.0]), None, false, 0.66, 0.0),
+    vref("œ͙", "cardinal 11 (B_cardinal_11)", [475.0, 1525.0, 2485.0], Some([555.0, 1830.0, 2855.0]), None, true, 0.66, 0.05),
+    vref("ɔ͙", "cardinal 6 (B_cardinal_6)", [420.0, 640.0, 2560.0], Some([490.0, 770.0, 2940.0]), None, true, 0.66, 1.0),
+    vref("a͙", "cardinal 4 (B_cardinal_4)", [830.0, 1390.0, 3205.0], Some([970.0, 1670.0, 3685.0]), None, false, 1.0, 0.0),
+    vref("ɒ͙", "cardinal 13 (B_cardinal_13)", [495.0, 710.0, 2590.0], Some([580.0, 855.0, 2975.0]), None, true, 1.0, 1.0),
+    // computed, no recording: the midpoint of the two recorded vowels around it on the chart
+    vref("æ͙", "ɛ–a midpoint (computed from Beck)", [680.0, 1560.0, 2890.0], Some([795.0, 1870.0, 3320.0]), None, false, 0.83, 0.0),
+    vref("ɐ͙", "ə–(a+ɑ)/2 midpoint (computed from Beck)", [600.0, 1235.0, 2615.0], Some([700.0, 1480.0, 3005.0]), None, false, 0.83, 0.5),
+    // Still fitted to their earlier targets (the calibrated table keeps these entries; refitting
+    // them needs their old entries dropped from vowelTargets.generated.json first). Their new values,
+    // from the same Beck measurement as the rows above:
+    //   ʉ: male [340.0, 1455.0, 1855.0], female [400.0, 1745.0, 2135.0]
+    //   ɯ̠: male [335.0, 1215.0, 2225.0], female [390.0, 1460.0, 2560.0]
+    //   ɤ̠: male [370.0, 910.0, 2180.0], female [435.0, 1090.0, 2505.0]
+    //   ʌ̠: male [510.0, 880.0, 2345.0], female [595.0, 1055.0, 2695.0]
+    //   ɶ: male [545.0, 1285.0, 2395.0], female [635.0, 1545.0, 2755.0]
+    //   ɑ̠: male [540.0, 835.0, 2560.0], female [630.0, 1000.0, 2940.0]
+    //   e̞: male [435.0, 1885.0, 2775.0], female [510.0, 2260.0, 3190.0]
+    //   ø̞: male [410.0, 1705.0, 2445.0], female [480.0, 2045.0, 2810.0]
+    //   ɤ̞: male [440.0, 890.0, 2260.0], female [515.0, 1070.0, 2600.0]
+    //   o̞: male [385.0, 675.0, 2595.0], female [450.0, 810.0, 2985.0]
+    //   ʏ: male [270.0, 1895.0, 2375.0], female [315.0, 2275.0, 2730.0]
+    //   ɘ: male [360.0, 1475.0, 2580.0], female [420.0, 1770.0, 2965.0]
+    //   ɵ: male [345.0, 1290.0, 2525.0], female [405.0, 1550.0, 2900.0]
+    //   ɜ: male [520.0, 1305.0, 2460.0], female [610.0, 1565.0, 2825.0]
+    //   ɞ: male [445.0, 1085.0, 2525.0], female [520.0, 1300.0, 2900.0]
     vref("ʉ", "close central rounded (Seeing Speech, J. Beck)", [342.0, 1462.0, 1839.0], Some([400.0, 1755.0, 2115.0]), None, true, 0.0, 0.5),
     vref("ʏ", "near-close near-front rounded (y–ø 보간)", [360.0, 1633.0, 2217.0], None, None, true, 0.2, 0.15),
     vref("ɘ", "close-mid central unrounded (e–ɤ 보간)", [468.0, 1670.0, 2570.0], None, None, false, 0.33, 0.5),
     vref("ɵ", "close-mid central rounded (ø–o 보간)", [444.0, 1230.0, 2355.0], None, None, true, 0.33, 0.55),
     vref("ɜ", "open-mid central unrounded (ɛ–ʌ 보간)", [602.0, 1500.0, 2578.0], None, None, false, 0.58, 0.45),
     vref("ɞ", "open-mid central rounded (œ–ɔ 보간)", [586.0, 1224.0, 2444.0], None, None, true, 0.6, 0.55),
-    // ɶ: Seeing Speech B_cardinal_12.mp4 (Janet Beck, 여성, F0 212 Hz) 0.2–0.75 s, LPC 11–13차가 일치한 값(12차 중앙값).
     vref("ɶ", "open front rounded (Seeing Speech, J. Beck)", [585.0, 1288.0, 2404.0], Some([685.0, 1545.0, 2765.0]), None, true, 1.0, 0.2),
-    // 기본모음 후설형 (Seeing Speech, Janet Beck 여성, LPC 11–13차 일치값). 영어 ʌ(hud)·중국어 ɤ(e)와 겹치지 않게
-    // u̠처럼 U+0320 을 붙인 별도 키: 正音 처리기 전용.
     vref("ɤ̠", "cardinal 15 close-mid back unrounded (B_cardinal_15)", [372.0, 896.0, 2187.0], Some([435.0, 1075.0, 2515.0]), None, false, 0.35, 1.0),
     vref("ʌ̠", "cardinal 14 open-mid back unrounded (B_cardinal_14)", [509.0, 879.0, 2365.0], Some([595.0, 1055.0, 2720.0]), None, false, 0.6, 1.0),
-    // ɤ̞ (lowered ɤ, 후설 중모음): 기본모음 15번 ɤ와 14번 ʌ의 중간 — Beck 실측 두 값(435/1075/2515, 595/1055/2720)의 평균.
     vref("ɤ̞", "mid back unrounded (cardinal 15–14 midpoint)", [440.0, 888.0, 2277.0], Some([515.0, 1065.0, 2618.0]), None, false, 0.48, 1.0),
     vref("ɯ̠", "cardinal 16 close back unrounded (B_cardinal_16)", [325.0, 1217.0, 2226.0], Some([380.0, 1460.0, 2560.0]), None, false, 0.0, 1.0),
-    // 正音 시제품: 한국어 중모음(ㅔ ㅚ ㅗ). ◌̞ = 반폐모음과 반개모음의 중간 — Beck 기본모음 쌍 실측값의 평균
-    // (e 395/2530/3300 + ɛ 590/2075/2945, ø 395/2260/2760 + œ 545/1825/2850, o 410/845/2610 + ɔ 505/760/2960).
     vref("e̞", "mid front unrounded (cardinal 2–3 midpoint)", [421.0, 1918.0, 2715.0], Some([492.0, 2302.0, 3122.0]), None, false, 0.48, 0.0),
     vref("ø̞", "mid front rounded (cardinal 10–11 midpoint)", [402.0, 1702.0, 2439.0], Some([470.0, 2042.0, 2805.0]), None, true, 0.48, 0.1),
     vref("o̞", "mid back rounded (cardinal 7–6 midpoint)", [391.0, 668.0, 2422.0], Some([458.0, 802.0, 2785.0]), None, true, 0.48, 1.0),
