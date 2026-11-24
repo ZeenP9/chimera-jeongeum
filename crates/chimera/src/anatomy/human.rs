@@ -282,8 +282,14 @@ pub struct HumanBody {
     pub open_phase: f64,
 }
 
-/// fork: how near the tongue body a lowered velum's oral face comes (cm, template scale)
-const VELUM_REST: f64 = 0.3;
+/// fork: how near the tongue body a lowered velum's oral face comes (cm, template scale). At 0.05
+/// the female ɔ̃ loses 10 dB (the mouth all but shut: an [ŋ]); at 0.15, 2.5 dB
+const VELUM_REST: f64 = 0.15;
+/// fork: the port area (cm², template scale) from which the velum hangs at its lowest
+const VELUM_HANG_PORT: f64 = 0.3;
+/// fork: that lowest turn, as a share of the flap's 46°. All the way down, the child's open vowels
+/// closed behind the velum (pharynx 0.1 cm²) as it lowered for a following nasal
+const VELUM_HANG: f64 = 0.75;
 
 pub const BODY_MALE: HumanBody = HumanBody { name: "Adult male", scale: 1.0, pharynx: 1.0, tongue_radius: 2.25, lip_width: 4.6, fold_length: 1.0, open_phase: 0.0 };
 pub const BODY_FEMALE: HumanBody = HumanBody { name: "Adult female", scale: 0.9, pharynx: 0.88, tongue_radius: 2.2, lip_width: 4.4, fold_length: 0.67, open_phase: 0.13 };
@@ -750,7 +756,13 @@ impl HumanVocalTract {
         let j = |x: f64, y: f64| rotate_about(this.p(x, y), this.condyle, phi);
 
         // ---- velum flap from PNS; angle from port area
-        let v_open = clamp(a.velum / 1.2, 0.0, 1.0);
+        // fork: an open velum hangs low. The flap is three quarters of the way down (VELUM_HANG)
+        // from a port of VELUM_HANG_PORT; it was a quarter down at a nasal vowel's 0.3 cm² and all
+        // the way only at 1.2. What
+        // nasalizes a vowel is less the port's width than how far the velum narrows the mouth in
+        // front of it: with the port held at 0.3 cm², the nose's share of the female ɔ̃ is 0.16 with
+        // the mouth 1.6 cm² wide behind the velum, 0.31 at 0.25 cm² (user 2026-11-24)
+        let v_open = VELUM_HANG * clamp(a.velum / VELUM_HANG_PORT, 0.0, 1.0);
         let v_len = 2.8 * k;
         // fork: the velum is soft and comes to rest above the tongue. The flap turns no further than
         // leaves VELUM_REST between its oral face and the tongue body; the port's area still follows

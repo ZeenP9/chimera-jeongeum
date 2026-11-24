@@ -31,10 +31,11 @@ fn lowering_the_velum_closes_neither_the_mouth_nor_the_pharynx_of_any_vowel() {
             for port in [0.3, 0.45, 0.8, 1.2] {
                 a.velum = port;
                 let (ph, or) = narrowest(&mut tract, &mut frame, &a);
-                // as open as with the velum raised, or open enough for a vowel. (The child's open
-                // vowels still narrow behind the velum, to 0.25–0.3 cm² from 0.6, at ports of 0.8 and
-                // more; nothing lowers it that far, the planner's ports being 0.3 and 0.45.)
-                if ph < f64::min(0.2, 0.8 * ph0) || or < f64::min(0.1, 0.8 * or0) {
+                // as open as with the velum raised, or open enough for a vowel: the velum narrows the
+                // way past it to about its rest distance from the tongue (0.15 cm; 0.15-0.25 cm² for
+                // the back vowels), which is what sends a nasal vowel's sound to the nose, and no
+                // further
+                if ph < f64::min(0.1, 0.8 * ph0) || or < f64::min(0.1, 0.8 * or0) {
                     bad.push(format!("{name} {vw} port {port}: pharynx {ph:.3} (raised {ph0:.3}), mouth {or:.3} (raised {or0:.3})"));
                 }
             }
