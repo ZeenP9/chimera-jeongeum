@@ -44,6 +44,12 @@ fn english_hood_is_still_the_english_vowel() {
     let t = vowel_table();
     for body in ["male", "female", "child"] {
         let (eng, man) = (t[body]["ʊ"].formants[1], t[body][ONG].formants[1]);
+        if body == "female" {
+            // fork (正音): the female body's ʊ is J. Beck's cardinal ʊ (F2 1080), further back than the
+            // English one it replaced, so ʊ̠ sits less far below it
+            assert!(eng > 1000.0 && man < eng - 50.0, "female: ʊ̠ F2 {man} vs ʊ {eng}");
+            continue;
+        }
         assert!(eng > 1100.0, "{body}: English ʊ F2 {eng} moved");
         assert!(man < 0.9 * eng, "{body}: ʊ̠ F2 {man} vs ʊ {eng}");
     }
@@ -88,7 +94,9 @@ fn sung_dong_has_an_f2_below_the_english_ʊ() {
     for (name, body) in [("male", BODY_MALE), ("female", BODY_FEMALE)] {
         let mandarin = sung_f2(pinyin_syllable("dong1", "dong1").unwrap(), body, name, FS);
         let english = sung_f2(english_ong(), body, name, FS);
-        assert!(mandarin + 150.0 < english, "{name}: Mandarin dong F2 {mandarin:.0} Hz vs English ʊŋ {english:.0} Hz");
+        // fork (正音): the female ʊ is Beck's cardinal ʊ, nearer ʊ̠ (above)
+        let gap = if name == "female" { 50.0 } else { 150.0 };
+        assert!(mandarin + gap < english, "{name}: Mandarin dong F2 {mandarin:.0} Hz vs English ʊŋ {english:.0} Hz");
     }
 }
 

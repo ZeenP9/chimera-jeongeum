@@ -41,6 +41,13 @@ fn english_and_ipa_text_still_sing_the_english_vowels() {
     assert_eq!(ipas("hu\u{320}d"), ["h", "u", "d"]);
     let t = vowel_table();
     for body in ["male", "female", "child"] {
+        if body == "female" {
+            // fork (正音): the female body's u is J. Beck's cardinal u, a back vowel, and u̠ is that same
+            // vowel (user decision 2026-11-24), so here the two no longer differ
+            assert!(t[body]["u"].formants[1] < 990.0, "female u is the cardinal back u: F2 {}", t[body]["u"].formants[1]);
+            assert_eq!(t[body][BACK_U].formants[1], t[body]["u"].formants[1], "female u̠ is u");
+            continue;
+        }
         assert!(t[body]["u"].formants[1] > 990.0 * if body == "male" { 1.0 } else { 1.1 }, "{body} English u moved");
         assert!(t[body][BACK_U].formants[1] < 0.8 * t[body]["u"].formants[1], "{body}: u̠ F2 {} vs u {}", t[body][BACK_U].formants[1], t[body]["u"].formants[1]);
     }
@@ -84,6 +91,11 @@ fn sung_wu_has_an_f2_far_below_the_english_u() {
     for (name, body) in [("male", BODY_MALE), ("female", BODY_FEMALE)] {
         let mandarin = sung_f2(pinyin_syllable("hu3", "hu3").unwrap(), body, name, FS);
         let english = sung_f2(english_u(), body, name, FS);
+        if name == "female" {
+            // fork (正音): the female u is the cardinal back u for every language (above)
+            assert!(mandarin < 1000.0 && (mandarin - english).abs() < 50.0, "female: Mandarin hu F2 {mandarin:.0} Hz, English u {english:.0} Hz");
+            continue;
+        }
         assert!(mandarin + 200.0 < english, "{name}: Mandarin hu F2 {mandarin:.0} Hz vs English u {english:.0} Hz");
     }
 }

@@ -43,8 +43,64 @@ fn round3(x: f64) -> f64 {
 }
 
 /// tbX tbY jaw lipAp lipProt lipWidth root larynx curl
-const LO: [f64; 9] = [1.2, 5.0, 0.05, 0.12, 0.0, 0.0, -0.9, -1.3, 0.0];
+// fork: the tongue body may sit as low and as far back as J. Beck's does (ɑ ɒ), within the
+// articulators' own range (ARTIC_SPECS)
+const LO: [f64; 9] = [1.0, 4.88, 0.05, 0.12, 0.0, 0.0, -0.9, -1.3, 0.0];
 const HI: [f64; 9] = [4.6, 8.8, 2.3, 2.0, 1.4, 1.0, 0.9, 1.3, 1.0];
+
+/// fork (正音, 사용자 지정 2026-11-23): where J. Beck's tongue body sits for each vowel, in this
+/// model's template frame (cm), from her midsagittal MRI on Seeing Speech (seeingspeech.ac.uk, IPA
+/// chart 4, "MRI2" takes, 320 px): the postures the vowels are fitted round, in place of upstream's.
+/// Per take: the tongue's upper contour (first air pixel above the tongue, x 192-256 px) in 25
+/// frames; a circle of the female body's tongue radius (1.98 cm = 26 px) fitted to it; the frames
+/// kept whose dorsum peak sits in the most populated 4-px band (the held vowel); the median centre.
+/// The head did not move between takes (a skull patch matched within 1 px, ʌ 3 px, corrected).
+/// Registration: 13 px/cm (her head's length taken as 18 cm), no rotation, the female body's hard
+/// palate laid on hers (model origin at px 195.6, 285), then `un_p` for the female body; her
+/// pharyngeal wall then lies within 2 px of the model's. Last, one offset (−0.72, +0.70), which
+/// puts her i e ɛ ɪ y ø where the unconstrained fit of her formants had put them: a pixel's worth
+/// of registration is 0.09 here, and the model's palate dome is ~0.4 cm taller than hers.
+/// Check: with the tongue held at these (weight 2), the female body gives her formants within
+/// 7 % for e ɛ ø œ ɤ ʌ ɑ ɔ ɒ ɨ; not the corners (u F1 +36 %, a F1 −18 %, o F2 +21 %, ɯ, i), where
+/// the lips or jaw are at their limits. The lowered mids and the vowels without a take sit midway
+/// between the two around them, as their formants do (vowel_data.rs). MRI is taken lying down;
+/// the offset above absorbs what gravity does to the front vowels, the back ones are as measured.
+/// the prior's weight on the tongue body's distance (cm²) from Beck's posture: 0.15 keeps the
+/// female fit within 0.1-0.35 cm of it with the formants as close as without (0.03 let the back
+/// vowels drift 0.5 cm up; 2 cost o 21 % of F2)
+const W_BECK: f64 = 0.15;
+/// the prior's weight once the vowel cannot be sounded from Beck's posture
+const W_BECK_SOFT: f64 = 0.03;
+// ɨ ə ɯ (and ɐ ɐ̞ ɘ ɵ ɜ ɞ, computed from them) are not here: the user set their formants away from her
+// recordings (2026-11-24), so her MRI positions no longer describe them.
+const BECK_TONGUE: &[(&str, f64, f64)] = &[
+    ("i", 4.01, 7.96),
+    ("e", 3.71, 7.71),
+    ("ɛ", 3.61, 6.45),
+    ("a", 2.62, 5.57),
+    ("ɑ", 1.33, 4.89),
+    ("ɔ", 1.13, 5.28),
+    ("o", 1.92, 6.54),
+    ("u", 1.62, 7.03),
+    ("u̠", 1.62, 7.03),
+    ("y", 4.31, 8.05),
+    ("ø", 3.71, 7.61),
+    ("œ", 3.11, 6.45),
+    ("ɶ", 2.72, 6.06),
+    ("ɒ", 1.03, 4.99),
+    ("ʌ", 1.52, 5.28),
+    ("ɤ", 2.02, 6.84),
+    ("ʉ", 3.71, 7.88),
+    ("ɪ", 3.41, 7.42),
+    ("ʊ", 2.72, 7.22),
+    ("e̞", 3.66, 7.08),
+    ("ø̞", 3.41, 7.03),
+    ("ɤ̞", 1.77, 6.06),
+    ("o̞", 1.50, 5.84),
+    ("ɔ̞", 1.08, 5.14),
+    ("æ", 3.11, 6.01),
+    ("ʏ", 4.01, 7.83),
+];
 
 /// What an apical vowel (ɿ after z c s, ʅ after zh ch sh r) fixes by construction instead of
 /// leaving to the formant fit: the lips (spread and open as for [i], never narrowed or protruded, which
@@ -180,6 +236,7 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
             continue;
         }
         let mut air = HumanAirway::new(96000.0, body);
+        let mut air_check = HumanAirway::new(96000.0, body);
         let k = body.scale;
         // `--missing`: start from the entries already in the file and skip those vowels
         let mut table: Vec<(String, Json)> = match (&results, missing_only) {
@@ -224,6 +281,12 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
             if vw.ipa == "ɯ" {
                 x0 = vec![2.6, 7.35, 0.25, 0.5, 0.1, 0.65, 0.4, 0.2, 0.0];
             }
+            // fork: the tongue body starts, and its prior centres, where J. Beck's sits (BECK_TONGUE)
+            // only the female body, hers; the male and child bodies are fitted as before
+            let beck = if bname == "female" { BECK_TONGUE.iter().find(|(v, _, _)| *v == vw.ipa).map(|&(_, x, y)| (x, y)) } else { None };
+            if let Some((x, y)) = beck {
+                (x0[0], x0[1]) = (x, y);
+            }
             // a declared start replaces the generic guess, and the priors below centre on it too
             if let Some(start) = start_from(vw.ipa, bname)
                 .and_then(|(b, e)| match &results {
@@ -242,7 +305,15 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
             // (a close vowel, the tongue hardly leaving the consonant): with the tip and lips
             // pinned the fit otherwise spent the jaw (1.4) and the body on the formants. 0.05 held
             // them best but cost F2 +10% and F3 -10%; 0.01 keeps the formants within 11%.
-            let (w_body, w_jaw) = if pinned.is_some() { (0.01, 0.01) } else { (0.006, 0.004) };
+            let (w_body0, w_jaw) = if pinned.is_some() {
+                (0.01, 0.01)
+            } else if beck.is_some() {
+                // a measured posture: held firmer than the vowel-space guess
+                (W_BECK, 0.004)
+            } else {
+                (0.006, 0.004)
+            };
+            let w_body = std::cell::Cell::new(w_body0);
             let mut cost = |p: &[f64]| -> f64 {
                 let a = to_artic(p, pinned.as_ref());
                 // the apical vowels' fixed lips and curl, in the priors below too
@@ -281,12 +352,23 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     c += 0.05 * pow(js_max(0.0, 0.55 - p[5]), 2.0)
                         + 0.05 * pow(js_max(0.0, p[4] - 0.35), 2.0)
                         + 0.03 * pow(js_max(0.0, (p[3] - ap_prior).abs() - 0.35), 2.0);
+                    // fork: a front unrounded vowel fitted to Beck keeps its lips spread. Her [i]'s F1
+                    // (235 Hz, near her f0) pulled the lips to the edge of the slack above (protrusion
+                    // 0.35, width 0.55): a half-rounded [i], and ɿ ʅ take their lips from it
+                    // The central and back unrounded ones (ɨ ɤ ʌ ɜ ɐ) reached her low F2 the same way
+                    // (ɤ: aperture 0.12, protrusion 0.42, width 0.09, an [o]'s lips): no protrusion,
+                    // and the lips neither narrowed nor closed past the neutral range
+                    if bname == "female" && vw.back < 0.5 {
+                        c += 2.0 * (p[4] * p[4] + pow(1.0 - p[5], 2.0));
+                    } else if bname == "female" {
+                        c += 2.0 * (p[4] * p[4] + pow(js_max(0.0, 0.55 - p[5]), 2.0) + pow(js_max(0.0, 0.3 - p[3]), 2.0));
+                    }
                 }
                 c += 0.002 * p[6] * p[6] + 0.006 * p[7] * p[7];
                 // the tongue body near where the vowel's height and backness put it: many postures
                 // give the same formants, and without this the fit wandered (a schwa with the
                 // tongue as low as /ɑ/), making every transition through it needlessly long
-                c += w_body * (pow(p[0] - x0[0], 2.0) + pow(p[1] - x0[1], 2.0));
+                c += w_body.get() * (pow(p[0] - x0[0], 2.0) + pow(p[1] - x0[1], 2.0));
                 if !matches!(vw.ipa, "ɝ" | "ʅ") {
                     c += 0.5 * p[8] * p[8];
                 }
@@ -313,6 +395,29 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 );
                 if nb.fx < best.fx {
                     best = nb;
+                }
+            }
+            // fork: where the body cannot sound the vowel from Beck's posture (F1 or F2 more than 10 %
+            // off: the corner vowels, lips or jaw at their limits), the posture gives way: refit with
+            // the prior at W_BECK_SOFT, and keep that if its formants are nearer
+            if beck.is_some() {
+                let miss = |x: &[f64], air: &mut HumanAirway| -> f64 {
+                    let (f, _) = formants(air, &freqs, &to_artic(x, pinned.as_ref()));
+                    if f.len() < 2 { f64::MAX } else { js_max(ln(f[0] / t[0]).abs(), ln(f[1] / t[1]).abs()) }
+                };
+                let held = miss(&best.x, &mut air_check);
+                if held > 0.095 {
+                    w_body.set(W_BECK_SOFT);
+                    let mut soft = nelder_mead(&mut cost, &best.x, opts([0.4, 0.4, 0.3, 0.25, 0.3, 0.25, 0.3, 0.3, 0.2], 1800));
+                    for _ in 0..2 {
+                        let nb = nelder_mead(&mut cost, &soft.x, opts([0.2, 0.2, 0.15, 0.12, 0.15, 0.12, 0.15, 0.15, 0.1], 1000));
+                        if nb.fx < soft.fx {
+                            soft = nb;
+                        }
+                    }
+                    if miss(&soft.x, &mut air_check) < held {
+                        best = soft;
+                    }
                 }
             }
             let a = to_artic(&best.x, pinned.as_ref());

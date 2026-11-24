@@ -78,8 +78,6 @@ pub fn expand(ipa: &str) -> Option<&'static [&'static str]> {
         "aɪ" => &["a", "ɪ"],
         // 正音 ㆎ (ㆍ+ㅣ): 뒤 a 에서 ɪ 로 (사용자 지정)
         "ɑɪ" => &["ɑ", "ɪ"],
-        // the same with 正音's cardinal-vowel targets (`jeongeum::beck`)
-        "ɑ̠ɪ\u{359}" => &["ɑ̠", "ɪ\u{359}"],
         "aʊ" => &["a", "ʊ"],
         "ɔɪ" => &["ɔ", "ɪ"],
         "eɪ" => &["e", "i"],

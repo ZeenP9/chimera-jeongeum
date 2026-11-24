@@ -317,7 +317,7 @@ pub fn word_syllables(word: &str) -> Vec<Syllable> {
 /// 正音 규칙(로컬 시제품): 발음되는 초성이 공명음(ㄴ ㄹ ㅁ)이면 ㅡ·ㅓ가 한 단계 낮아진다.
 ///   ㅡ : 공명음 뒤 [ɤ] (기본모음 15번), 그 밖의 자음 뒤 [ɯ] (기본모음 16번)
 ///   ㅓ : 공명음 뒤 [ʌ] (기본모음 14번), 그 밖의 자음 뒤 [ɤ̞] (15번과 14번 사이)
-/// 값은 Seeing Speech 기본모음(J. Beck) 실측으로 보정한 ɯ̠ ɤ̠ ɤ̞ ʌ̠ (vowel_data.rs).
+/// 값은 Seeing Speech 기본모음(J. Beck) 실측으로 보정한 ɯ ɤ ɤ̞ ʌ (vowel_data.rs).
 /// 초성 없는 으·어(·여·워)는 ZERO_ONSET_SONORANT 에 따라 (사용자 확인 대기: 지금은 공명음 쪽).
 const ZERO_ONSET_SONORANT: bool = true;
 fn eo_vowel(b: &Block) -> &'static str {
@@ -327,10 +327,10 @@ fn eo_vowel(b: &Block) -> &'static str {
         None => ZERO_ONSET_SONORANT,
     };
     match (b.vowel, sonorant) {
-        ("ʌ", true) => "ʌ̠",
+        ("ʌ", true) => "ʌ",
         ("ʌ", false) => "ɤ̞",
-        ("ɯ", true) => "ɤ̠",
-        ("ɯ", false) => "ɯ̠",
+        ("ɯ", true) => "ɤ",
+        ("ɯ", false) => "ɯ",
         (v, _) => v,
     }
 }

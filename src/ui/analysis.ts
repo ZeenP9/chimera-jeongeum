@@ -11,9 +11,6 @@ import { bodyWeights, type BodyMix } from "./body.ts";
  *  (a consonant's tongue held open, not a point among the vowels) and the retracted u̠ ʊ̠ (Beijing back u and ong, F2 ~660 and
  *  ~730 Hz), which would sit on top of the English u ʊ the map is drawn for. */
 const NOT_ON_THE_MAP = new Set(["ɿ", "ʅ", "u̠", "ʊ̠"]);
-/** 正音's own copies of the chart's vowels (J. Beck's cardinal vowels, vowel_data.rs) carry U+0359;
- * the map keeps the plain ones */
-const JEONGEUM_MARK = "\u0359";
 
 export interface VowelPoint {
   ipa: string;
@@ -52,7 +49,7 @@ export class VoiceModel {
       .map(([n, w]) => ({ w, table: VOWEL_TARGETS[n] ?? {} }));
     // the vowel space (chart, pad, readouts) leaves out the Mandarin-only vowels (NOT_ON_THE_MAP);
     // the planner still sings them
-    this.vowels = VOWELS.filter((v) => !NOT_ON_THE_MAP.has(v.ipa) && !v.ipa.includes(JEONGEUM_MARK) && parts.every((p) => p.table[v.ipa])).map((v) => {
+    this.vowels = VOWELS.filter((v) => !NOT_ON_THE_MAP.has(v.ipa) && parts.every((p) => p.table[v.ipa])).map((v) => {
       const at = (f: (t: (typeof parts)[number]["table"][string]) => number | undefined) => {
         let acc = 0, ws = 0;
         for (const p of parts) {
