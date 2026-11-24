@@ -11,10 +11,7 @@ fn arpa(base: &str) -> Option<&'static str> {
     Some(match base {
         "AA" => "ɑ",
         "AE" => "æ",
-        // fork (正音): every language shares one value per IPA symbol (vowel_data.rs), so English
-        // sends the symbol of the sound it makes: the stressed vowel of "cup" is the central [ɐ],
-        // not cardinal ʌ (back), whatever the dictionary writes
-        "AH" => "ɐ",
+        "AH" => "ʌ",
         "AO" => "ɔ",
         "AW" => "aʊ",
         "AY" => "aɪ",
@@ -54,7 +51,7 @@ fn arpa(base: &str) -> Option<&'static str> {
         _ => return None,
     })
 }
-const VOWELS: [&str; 17] = ["ɑ", "æ", "ɐ", "ə", "ɔ", "aʊ", "aɪ", "ɛ", "ɝ", "ɚ", "eɪ", "ɪ", "i", "oʊ", "ɔɪ", "ʊ", "u"];
+const VOWELS: [&str; 17] = ["ɑ", "æ", "ʌ", "ə", "ɔ", "aʊ", "aɪ", "ɛ", "ɝ", "ɚ", "eɪ", "ɪ", "i", "oʊ", "ɔɪ", "ʊ", "u"];
 fn is_vowel(ipa: &str) -> bool {
     VOWELS.contains(&ipa)
 }
@@ -79,7 +76,7 @@ fn is_function_word(w: &str) -> bool {
 }
 fn reduce_vowel(ipa: &str) -> Option<&'static str> {
     Some(match ipa {
-        "ɐ" | "æ" | "ɑ" | "ɛ" | "ɔ" | "u" | "ʊ" => "ə",
+        "ʌ" | "æ" | "ɑ" | "ɛ" | "ɔ" | "u" | "ʊ" => "ə",
         _ => return None,
     })
 }
@@ -367,7 +364,7 @@ const RULES: &[Rule] = &[
     ("", "le", "#", "ə ɫ"), ("", "ed", "#", "d"), ("", "es", "#", "z"), ("C", "s", "#", "s"), ("V", "s", "#", "z"), ("", "y", "#", "i"),
     ("#", "y", "", "j"), ("C", "y", "", "aɪ"), ("", "e", "#", ""),
     ("", "a", "CV", "eɪ"), ("", "a", "", "æ"), ("", "e", "", "ɛ"), ("", "i", "CV", "aɪ"), ("", "i", "", "ɪ"), ("", "o", "CV", "oʊ"),
-    ("", "o", "", "ɑ"), ("", "u", "CV", "u"), ("", "u", "", "ɐ"), ("", "y", "", "ɪ"),
+    ("", "o", "", "ɑ"), ("", "u", "CV", "u"), ("", "u", "", "ʌ"), ("", "y", "", "ɪ"),
     ("", "c", "e", "s"), ("", "c", "i", "s"), ("", "c", "y", "s"), ("", "c", "", "k"), ("", "g", "e", "dʒ"), ("", "g", "i", "dʒ"), ("", "g", "", "g"),
     ("", "x", "", "k s"), ("", "j", "", "dʒ"), ("", "q", "", "k"), ("", "b", "", "b"), ("", "d", "", "d"), ("", "f", "", "f"), ("", "h", "", "h"),
     ("", "k", "", "k"), ("", "l", "", "l"), ("", "m", "", "m"), ("", "n", "", "n"), ("", "p", "", "p"), ("", "r", "", "ɹ"), ("", "s", "", "s"),

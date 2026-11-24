@@ -113,10 +113,11 @@ fn the_jeongeum_vowels_take_their_symbol_from_the_syllable() {
 
 #[test]
 fn english_cup_and_jeongeum_keop_send_their_own_symbols() {
-    // 사용자 지정: one vowel per symbol; English "cup" is the central [ɐ], 正音 컵 is ㅓ before ㅂ = [ɤ̞]
+    // English keeps the symbol upstream registered for it ("cup" is ʌ; 사용자 지정 2026-11-24, undoing
+    // the fork's ɐ); 正音 컵 is ㅓ before ㅂ = [ɤ̞]
     let g2p = EnglishG2P::new();
     let n = |t: &str| lyrics_to_syllables(t, &g2p)[0].nucleus.ipa.clone();
-    assert_eq!(n("cup"), "ɐ");
+    assert_eq!(n("cup"), "ʌ");
     assert_eq!(n("컵"), "ɤ̞");
 }
 

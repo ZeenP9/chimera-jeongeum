@@ -14,7 +14,8 @@
 //! 970), and the F1 of the close vowels, near her F0. Symbols the male table lacked (ɐ̞ ɔ̞) take
 //! her values × the mean men/women ratio of Hillenbrand's vowels. Known and accepted for now: on
 //! the male and child bodies a symbol can mean upstream's vowel (ʌ: American "hud"), and their o
-//! is opener than their o̞. English "cup" is sent as ɐ on every body (english.rs).
+//! is opener than their o̞. English keeps upstream's symbols ("cup" is ʌ), so on the female body
+//! an English word sounds with Beck's vowel of that symbol (her ʌ is a back vowel).
 
 use serde::Serialize;
 
