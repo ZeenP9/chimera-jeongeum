@@ -71,6 +71,7 @@ const HI: [f64; 9] = [4.6, 8.8, 2.3, 2.0, 1.4, 1.0, 0.9, 1.3, 1.0];
 const W_BECK: f64 = 0.15;
 /// the prior's weight once the vowel cannot be sounded from Beck's posture
 const W_BECK_SOFT: f64 = 0.03;
+// ɑ ɔ ɒ ɔ̞ o̞ are not here either: the user set them 110-155 Hz opener than her recordings read (2026-11-25).
 // ɨ ə ɯ (and ɐ ɐ̞ ɘ ɵ ɜ ɞ, computed from them) are not here: the user set their formants away from her
 // recordings (2026-11-24), so her MRI positions no longer describe them.
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
@@ -78,8 +79,6 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("e", 3.71, 7.71),
     ("ɛ", 3.61, 6.45),
     ("a", 2.62, 5.57),
-    ("ɑ", 1.33, 4.89),
-    ("ɔ", 1.13, 5.28),
     ("o", 1.92, 6.54),
     ("u", 1.62, 7.03),
     ("u̠", 1.62, 7.03),
@@ -87,7 +86,6 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("ø", 3.71, 7.61),
     ("œ", 3.11, 6.45),
     ("ɶ", 2.72, 6.06),
-    ("ɒ", 1.03, 4.99),
     ("ʌ", 1.52, 5.28),
     ("ɤ", 2.02, 6.84),
     ("ʉ", 3.71, 7.88),
@@ -96,8 +94,6 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("e̞", 3.66, 7.08),
     ("ø̞", 3.41, 7.03),
     ("ɤ̞", 1.77, 6.06),
-    ("o̞", 1.50, 5.84),
-    ("ɔ̞", 1.08, 5.14),
     ("æ", 3.11, 6.01),
     ("ʏ", 4.01, 7.83),
 ];
