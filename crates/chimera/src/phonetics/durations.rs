@@ -34,7 +34,8 @@ fn table(ipa: &str) -> Option<(f64, f64)> {
         "u" => (210.0, 70.0),
         // Mandarin's back u (vowel_data.rs): as long as u
         "u̠" => (210.0, 70.0),
-        "ʌ" => (140.0, 60.0),
+        // English's "cup" vowel is sent as ɐ (english.rs): its duration is Klatt's for /ʌ/
+        "ʌ" | "ɐ" => (140.0, 60.0),
         "ə" => (120.0, 60.0),
         "ɚ" => (180.0, 80.0),
         "ɝ" => (180.0, 80.0),

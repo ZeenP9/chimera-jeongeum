@@ -143,7 +143,8 @@ fn to_arpa(s: &Segment) -> Result<String, String> {
     let (base, vowel) = match s.ipa.as_str() {
         "ɑ" => ("AA", true),
         "æ" => ("AE", true),
-        "ʌ" => ("AH", true),
+        // fork (正音): English's "cup" vowel is sent as ɐ (english.rs); cardinal ʌ keeps the same phone
+        "ʌ" | "ɐ" => ("AH", true),
         "ə" => return Ok("AH0".into()),
         "ɔ" => ("AO", true),
         "aʊ" => ("AW", true),
@@ -338,10 +339,11 @@ const ALIGN_FLOOR_DB: f64 = -47.0;
 /// Below this many tokens a speaker's category value is left out.
 const MIN_TOKENS: usize = 3;
 
-const VOWELS: [&str; 17] = ["ɑ", "æ", "ʌ", "ə", "ɔ", "aʊ", "aɪ", "ɛ", "ɝ", "ɚ", "eɪ", "ɪ", "i", "oʊ", "ɔɪ", "ʊ", "u"];
+const VOWELS: [&str; 17] = ["ɑ", "æ", "ɐ", "ə", "ɔ", "aʊ", "aɪ", "ɛ", "ɝ", "ɚ", "eɪ", "ɪ", "i", "oʊ", "ɔɪ", "ʊ", "u"];
 /// vowels whose F1 and F2 are measured: the stressable monophthongs (diphthongs move, and
 /// /ə ɚ/ only occur reduced)
-const MONOPHTHONGS: [&str; 10] = ["i", "ɪ", "ɛ", "æ", "ɑ", "ɔ", "ʌ", "ʊ", "u", "ɝ"];
+// fork (正音): "cup" is labelled ɐ since english.rs sends that symbol; the judge scores the same vowel
+const MONOPHTHONGS: [&str; 10] = ["i", "ɪ", "ɛ", "æ", "ɑ", "ɔ", "ɐ", "ʊ", "u", "ɝ"];
 const STOPS: [&str; 6] = ["p", "t", "k", "b", "d", "g"];
 const SIBILANTS: [&str; 5] = ["s", "z", "ʃ", "tʃ", "dʒ"];
 const AFFRICATES: [&str; 2] = ["tʃ", "dʒ"];
@@ -1561,7 +1563,7 @@ mod tests {
                 let back = arpabet_to_segments(&arpa).pop().unwrap();
                 // ARPAbet has one unstressed AH and ER: an unstressed ʌ or ɝ comes back reduced
                 let want = match (*ipa, stress) {
-                    ("ʌ", 0) => "ə",
+                    ("ɐ", 0) => "ə",
                     ("ɝ", 0) => "ɚ",
                     _ => ipa,
                 };
