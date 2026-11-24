@@ -13,6 +13,7 @@ pub mod ipa;
 pub mod jeongeum;
 pub mod jeongeum_deva;
 pub mod jeongeum_kana;
+pub mod jeongeum_pl;
 pub mod korean;
 pub mod mandarin;
 pub mod planner;

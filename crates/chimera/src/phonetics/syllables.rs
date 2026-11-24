@@ -16,6 +16,7 @@ use super::english::js_is_space;
 use super::jeongeum::{Jeongeum, JeongeumHan};
 use super::jeongeum_deva::JeongeumDeva;
 use super::jeongeum_kana::{JeongeumKana, is_kana};
+use super::jeongeum_pl::{JeongeumPolish, is_polish_letter};
 use super::korean::Korean;
 use super::mandarin::{Mandarin, MandarinLexicon, Pinyin};
 use super::russian::Russian;
@@ -349,8 +350,12 @@ pub fn lyrics_in(text: &str, g2p: &impl WordSource, zh: &MandarinLexicon, lang: 
     // 중국어로 잘못 읽지 않도록 건너뛴다 (빈 사전)
     let no_han = MandarinLexicon::new();
     let zh = if text.chars().any(is_kana) { &no_han } else { zh };
-    match lang {
-        Lang::En => read_lyrics(text, &[&Pinyin, &English(g2p), &Jeongeum, &JeongeumKana, &JeongeumDeva, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
-        Lang::Tr => read_lyrics(text, &[&Pinyin, &Turkish, &Jeongeum, &JeongeumKana, &JeongeumDeva, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
-    }
+    // 正音: 폴란드어 글자(ą ć ę ł ń ó ś ź ż)가 든 가사는 로마자 낱말을 모두 폴란드어로 읽는다
+    let pl = JeongeumPolish { whole: text.chars().any(is_polish_letter) };
+    let mut out = match lang {
+        Lang::En => read_lyrics(text, &[&Pinyin, &pl, &English(g2p), &Jeongeum, &JeongeumKana, &JeongeumDeva, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
+        Lang::Tr => read_lyrics(text, &[&Pinyin, &pl, &Turkish, &Jeongeum, &JeongeumKana, &JeongeumDeva, &Korean, &Russian, &JeongeumHan(zh), &Mandarin(zh)]),
+    };
+    super::jeongeum::phrase_final_breath(&mut out);
+    out
 }
