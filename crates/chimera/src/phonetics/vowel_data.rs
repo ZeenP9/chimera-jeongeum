@@ -111,6 +111,6 @@ pub static VOWELS: &[VowelRef] = &[
     vref("e̞", "e–ɛ midpoint (computed from J. Beck)", [421.0, 1918.0, 2715.0], Some([510.0, 2260.0, 3190.0]), None, false, 0.5, 0.0),
     vref("ø̞", "ø–œ midpoint (computed from J. Beck)", [402.0, 1702.0, 2439.0], Some([480.0, 2045.0, 2810.0]), None, true, 0.5, 0.05),
     vref("o̞", "o–ɔ midpoint (computed; user 2026-11-25, was o–ɔ̞)", [391.0, 668.0, 2422.0], Some([510.0, 840.0, 2995.0]), None, true, 0.5, 1.0),
-    vref("ɔ̞", "ɔ–ɒ midpoint (computed from the user's ɔ and ɒ, 2026-11-25)", [455.0, 705.0, 2620.0], Some([650.0, 890.0, 2960.0]), None, true, 0.83, 1.0),
+    vref("ɔ̞", "midpoint of ɔ and ɒ as they are heard, their fitted formants (user 2026-11-25; ɔ 592/858, ɒ 676/957), not of their targets", [455.0, 705.0, 2620.0], Some([635.0, 910.0, 2960.0]), None, true, 0.83, 1.0),
     vref("ɐ̞", "ɐ–ä (ä = a–ɑ) midpoint (computed; ə as set by the user)", [635.0, 1205.0, 2785.0], Some([775.0, 1435.0, 3160.0]), None, false, 0.92, 0.5),
 ];
