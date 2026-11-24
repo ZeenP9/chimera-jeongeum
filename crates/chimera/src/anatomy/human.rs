@@ -282,6 +282,9 @@ pub struct HumanBody {
     pub open_phase: f64,
 }
 
+/// fork: how near the tongue body a lowered velum's oral face comes (cm, template scale)
+const VELUM_REST: f64 = 0.3;
+
 pub const BODY_MALE: HumanBody = HumanBody { name: "Adult male", scale: 1.0, pharynx: 1.0, tongue_radius: 2.25, lip_width: 4.6, fold_length: 1.0, open_phase: 0.0 };
 pub const BODY_FEMALE: HumanBody = HumanBody { name: "Adult female", scale: 0.9, pharynx: 0.88, tongue_radius: 2.2, lip_width: 4.4, fold_length: 0.67, open_phase: 0.13 };
 pub const BODY_CHILD: HumanBody = HumanBody { name: "Child", scale: 0.74, pharynx: 0.8, tongue_radius: 2.15, lip_width: 4.0, fold_length: 0.35, open_phase: 0.13 };
@@ -748,8 +751,37 @@ impl HumanVocalTract {
 
         // ---- velum flap from PNS; angle from port area
         let v_open = clamp(a.velum / 1.2, 0.0, 1.0);
-        let v_ang = (194.0 + 46.0 * v_open) * DEG;
         let v_len = 2.8 * k;
+        // fork: the velum is soft and comes to rest above the tongue. The flap turns no further than
+        // leaves VELUM_REST between its oral face and the tongue body; the port's area still follows
+        // the articulator. Turning freely it passed through a back vowel's tongue: the mouth sealed
+        // at a port of 0.3 cm² (child o u ɤ; female u ɤ at 0.09 cm²) and the pharynx behind it from
+        // 0.65 (female ɤ̃: no voice). A raised velum (port 0) is where it was, so no oral sound moves.
+        let v_open = {
+            let (tr, tb) = (self.body.tongue_radius * k, this.p(a.tb_x, a.tb_y));
+            let gap = |o: f64| -> f64 {
+                let ang = (194.0 + 46.0 * o) * DEG;
+                let nrm = v(-sin(ang), cos(ang));
+                let mut g = f64::MAX;
+                for i in 0..=10 {
+                    let s = i as f64 / 10.0;
+                    let c = add(polar(self.pns, v_len * s, ang), v(0.0, -sin(s * PI) * k * (0.3 * o - 0.12)));
+                    g = g.min(dist(add(c, scale(nrm, (0.48 - 0.2 * s) * k)), tb) - tr);
+                }
+                g
+            };
+            if v_open <= 0.0 || gap(v_open) >= VELUM_REST * k {
+                v_open
+            } else {
+                let (mut lo, mut hi) = (0.0, v_open);
+                for _ in 0..10 {
+                    let mid = 0.5 * (lo + hi);
+                    if gap(mid) >= VELUM_REST * k { lo = mid } else { hi = mid }
+                }
+                lo
+            }
+        };
+        let v_ang = (194.0 + 46.0 * v_open) * DEG;
         sc.vel.clear();
         sc.vel_oral.clear();
         sc.vel_nasal.clear();
