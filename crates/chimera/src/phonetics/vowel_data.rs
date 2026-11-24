@@ -76,8 +76,8 @@ pub static VOWELS: &[VowelRef] = &[
     vref("ø", "cardinal 10, J. Beck", [390.0, 1550.0, 2250.0], Some([400.0, 2260.0, 2770.0]), None, true, 0.33, 0.05),
     vref("œ", "cardinal 11, J. Beck", [520.0, 1450.0, 2350.0], Some([555.0, 1830.0, 2855.0]), None, true, 0.66, 0.05),
     vref("ɨ", "close central unrounded: F1 F2 set by the user 2026-11-24 (J. Beck measured 345 / 2110), F3 Beck", [330.0, 1600.0, 2400.0], Some([340.0, 1985.0, 2350.0]), None, false, 0.0, 0.5),
-    vref("ɯ", "cardinal 16: F1 F2 set by the user 2026-11-24 (J. Beck measured 390 / 1460), F3 Beck", [340.0, 1350.0, 2400.0], Some([380.0, 1160.0, 2560.0]), None, false, 0.0, 1.0),
-    vref("ɤ", "cardinal 15, J. Beck", [460.0, 1250.0, 2450.0], Some([435.0, 1090.0, 2505.0]), None, false, 0.33, 1.0),
+    vref("ɯ", "cardinal 16: F1 F2 set by the user 2026-11-25 (380 / 1160 before; J. Beck measured 390 / 1460), F3 Beck", [340.0, 1350.0, 2400.0], Some([400.0, 1200.0, 2560.0]), None, false, 0.0, 1.0),
+    vref("ɤ", "cardinal 15: F1 F2 set by the user 2026-11-25 (J. Beck measured 435 / 1090), F3 Beck", [460.0, 1250.0, 2450.0], Some([460.0, 1120.0, 2505.0]), None, false, 0.33, 1.0),
     // Mandarin's apical vowels: the -i of 四 si (after z c s) and of 是 shi (after zh ch sh r), the
     // consonant's tongue held open; the retroflex one has a low F3 (approximate male means)
     vref("ɿ", "Mandarin si (apical)", [360.0, 1400.0, 2600.0], None, None, false, 0.0, 0.45),

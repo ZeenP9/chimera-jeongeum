@@ -76,6 +76,28 @@ const W_BECK_SOFT: f64 = 0.03;
 // ɑ ɔ ɒ ɔ̞ o̞ ɶ are not here either: the user set them 110-155 Hz opener than her recordings read (2026-11-25).
 // ɨ ə ɯ (and ɐ ɐ̞ ɘ ɵ ɜ ɞ, computed from them) are not here: the user set their formants away from her
 // recordings (2026-11-24), so her MRI positions no longer describe them.
+/// fork: how far J. Beck's lips part at the midline in her unrounded vowels, as `lipAp` (cm / 0.9).
+/// Read by eye from the Seeing Speech MRI2 takes on a 5 px grid, 13 px per cm, +-2 px (0.15 cm):
+/// upper lip's lower edge to lower lip's upper edge in a held frame. ɛ æ a ʌ open past the
+/// model's range (2.0) and sit at or near it. Lip width cannot be seen in a midsagittal scan.
+const BECK_LIP_AP: &[(&str, f64)] = &[
+    ("i", 1.55), ("ɪ", 1.8), ("e", 1.8), ("ɛ", 2.0), ("æ", 2.0), ("a", 2.0),
+    ("ɨ", 1.6), ("ə", 1.45), ("ɯ", 0.75), ("ɤ", 1.3), ("ʌ", 1.9), ("ɑ", 1.55),
+];
+/// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
+const W_BECK_LIP: f64 = 0.15;
+/// the share of her opening the model takes (user, 2026-11-25): she lay down and held each cardinal
+/// vowel, both of which open the lips further than speech does. At the full reading the female
+/// labial stops closed 13.7 ms late (stop_spans, limit 7): the lips had 1 cm further to travel.
+/// a ɛ æ take the full reading (user): 0.7 of it shut them below where they were (a: F1 835 -> 813).
+const BECK_LIP_SCALE: f64 = 0.7;
+/// ʌ keeps nearer its formants instead (user, 2026-11-25): from her tongue posture every bit of
+/// lip opening raises F1 (0.5: 603 Hz, 0.7: 626, 0.9: 648, her 1.9 x 0.7: 683, for a target of
+/// 595). 0.7 is the least that keeps the nasals on time: at 0.5 its nearly shut lips closed /m/
+/// 9-10 ms early and nasal_spans failed (female median -7.4 ms, limit 7)
+const LIP_AP_WEDGE: f64 = 0.7;
+/// ɤ opens less too (user, 2026-11-25): at 0.7 of her reading it came out 9 % high in F1 and F2
+const LIP_AP_RAMS_HORN: f64 = 0.5;
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("i", 4.01, 7.96),
     ("e", 3.71, 7.71),
@@ -357,7 +379,26 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     if bname == "female" && vw.back < 0.5 {
                         c += 2.0 * (p[4] * p[4] + pow(1.0 - p[5], 2.0));
                     } else if bname == "female" {
-                        c += 2.0 * (p[4] * p[4] + pow(js_max(0.0, 0.55 - p[5]), 2.0) + pow(js_max(0.0, 0.3 - p[3]), 2.0));
+                        c += 2.0 * (p[4] * p[4] + pow(js_max(0.0, 0.55 - p[5]), 2.0));
+                    }
+                    // fork: and the lips open as far as hers do (BECK_LIP_AP). Held to the tongue alone,
+                    // the fit shut the lips to reach her formants (ə ɯ ɤ ʌ all 0.27 cm high, hers
+                    // 0.7 to 1.9 cm). An unrounded vowel she did not record opens at least as far
+                    // as the least open of her mid ones (ɤ)
+                    if bname == "female" {
+                        c += W_BECK_LIP * match BECK_LIP_AP.iter().find(|(v, _)| *v == vw.ipa) {
+                            Some(&(v, ap)) => pow(
+                                p[3] - match v {
+                                    "ʌ" => LIP_AP_WEDGE,
+                                    "ɤ" => LIP_AP_RAMS_HORN,
+                                    // her open vowels' full reading is the model's limit already
+                                    "a" | "ɛ" | "æ" => ap,
+                                    _ => BECK_LIP_SCALE * ap,
+                                },
+                                2.0,
+                            ),
+                            None => pow(js_max(0.0, BECK_LIP_SCALE * 1.3 - p[3]), 2.0),
+                        };
                     }
                 }
                 c += 0.002 * p[6] * p[6] + 0.006 * p[7] * p[7];
