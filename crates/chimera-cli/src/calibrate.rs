@@ -84,6 +84,22 @@ const BECK_LIP_AP: &[(&str, f64)] = &[
     ("i", 1.55), ("ɪ", 1.8), ("e", 1.8), ("ɛ", 2.0), ("æ", 2.0), ("a", 2.0),
     ("ɨ", 1.6), ("ə", 1.45), ("ɯ", 0.75), ("ɤ", 1.3), ("ʌ", 1.9), ("ɑ", 1.55),
 ];
+/// fork: the least her lips part in the rounded vowels that reach their formants as well with them
+/// open (user, 2026-11-25): 0.7 of the MRI2 reading (ɔ 1.5 cm, ɒ 1.4 cm), as `lipAp`. Refitted
+/// with this floor ɔ stays 593/858 (lips 0.37 -> 1.05 cm high, 2.3 -> 1.0 cm wide, protrusion
+/// 0.34 -> 0.55) and ɒ 677/957. o and u cannot: their protrusion, width and jaw are at their
+/// limits already, and opening the lips to 0.7 of hers raises F1 (o 433 -> 468, u 357 -> 388).
+/// o opens all the same (0.75 cm x 0.7 = 0.52 cm) and its target moved to what that gives,
+/// 468/852 (user). u opens to 0.38 cm at least (user) and keeps its target of 300/830, which it
+/// cannot reach: it pulls the fit to 377/904, where a nearer target (375/900) settled at 406/919,
+/// 11 Hz off ʊ's F1.
+/// o̞ and ɔ̞ are midpoints of these vowels and take the midpoints of their floors (not readings):
+/// left free, o̞ fitted with its lips 0.12 cm apart, less than o's.
+/// u̠ is u on this body (user, 2026-11-24) and opens with it. y ʏ ʉ ʊ open to 0.27 cm at least
+/// (user, 2026-11-25; they had fitted 0.11 to 0.13 cm apart, where hers read 0.4 to 0.8 cm) and
+/// keep their formants within 1 %. œ opens to 0.65 cm (user: 0.6 to 0.75): it had fitted at
+/// 0.40 cm, less than the closer ø's 0.48 (her œ has no clean frame to read).
+const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("ʊ", 0.3), ("œ", 0.72), ("u", 0.42), ("u̠", 0.42), ("o", 0.58), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
 /// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
 const W_BECK_LIP: f64 = 0.15;
 /// the share of her opening the model takes (user, 2026-11-25): she lay down and held each cardinal
@@ -112,6 +128,11 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("ʌ", 1.52, 5.28),
     ("ɤ", 2.02, 6.84),
     ("ʉ", 3.71, 7.88),
+    // ɪ stays held (user, 2026-11-25), short of its target (406 Hz for 385): free, it reached
+    // 376/2312 with the tongue 0.46 cm further back and 0.12 higher, near enough the velum that /ŋ/
+    // after it closed early and nasal_spans failed (female median -7.65 ms, limit 7); held midway,
+    // still -7.40. Raising its F1 target moved only the root. e moved instead, down and forward
+    // (430/2400), so that ɪ sits above it and further back.
     ("ɪ", 3.41, 7.42),
     ("ʊ", 2.72, 7.22),
     ("e̞", 3.66, 7.08),
@@ -163,6 +184,9 @@ fn apical(ipa: &str, bname: &str, i_lips: Option<[f64; 3]>) -> Option<Apical> {
 fn start_from(ipa: &str, body: &str) -> Option<(&'static str, &'static str)> {
     match (ipa, body) {
         ("u̠", "female") => Some(("male", "u̠")),
+        // fork: o̞ is the midpoint of o and ɔ and starts from ɔ, fitted before it. From the generic
+        // guess it settled in another basin (tongue 0.9 cm higher, larynx raised 0.94), F2 6 % high
+        ("o̞", "female") => Some(("female", "ɔ")),
         _ => None,
     }
 }
@@ -308,6 +332,8 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
             // a declared start replaces the generic guess, and the priors below centre on it too
             if let Some(start) = start_from(vw.ipa, bname)
                 .and_then(|(b, e)| match &results {
+                    // the body being fitted is not in the results yet: its own table so far
+                    _ if b == bname => solved_posture(&table, e),
                     Json::Obj(m) => match &m.iter().find(|(k, _)| k == b)?.1 {
                         Json::Obj(t) => solved_posture(t, e),
                         _ => None,
@@ -399,6 +425,13 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                             ),
                             None => pow(js_max(0.0, BECK_LIP_SCALE * 1.3 - p[3]), 2.0),
                         };
+                    }
+                }
+                // fork: the rounded vowels' lips part at least as far as BECK_LIP_AP_ROUND says: the
+                // fit reaches the same formants with a taller, narrower, more protruded opening
+                if bname == "female" {
+                    if let Some(&(_, ap)) = BECK_LIP_AP_ROUND.iter().find(|(v, _)| *v == vw.ipa) {
+                        c += 5.0 * pow(js_max(0.0, ap - p[3]), 2.0);
                     }
                 }
                 c += 0.002 * p[6] * p[6] + 0.006 * p[7] * p[7];
