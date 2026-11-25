@@ -111,6 +111,34 @@ export function fitSong(tune: Tune, syls: Syllable[], shift = 0): { notes: SungN
   return { notes, from };
 }
 
+/**
+ * 正音: 읽기용 곡 (`tune.read`). 가사의 줄(구 끝)마다 음절 하나에 한 박짜리 음 하나, 줄 끝 음절은 곡의 끝 음
+ * 길이만큼 길게 (숨이 거기서 나온다). 높이는 곡의 첫 음에서 줄 안에서 `fall` 반음을 고르게 내려가고 줄 끝은
+ * `end` 반음 더 내려간다. 음절의 성조 굽이는 그 음 위에 그대로 실린다.
+ */
+export function readSong(tune: Tune, syls: Syllable[], shift = 0): { notes: SungNote[]; from: number[] } {
+  const read = tune.read ?? { fall: 0, end: 0 };
+  const first = tune.phrases[0][0], lastNote = tune.phrases[0][tune.phrases[0].length - 1];
+  const notes: SungNote[] = [], from: number[] = [];
+  let line: number[] = [];
+  const flush = () => {
+    const n = line.length;
+    line.forEach((i, j) => {
+      const last = j === n - 1;
+      const midi = first[0] + shift - (n > 1 ? (read.fall * j) / (n - 1) : 0) - (last && n > 1 ? read.end : 0);
+      notes.push({ midi, beats: last ? lastNote[1] : first[1], syl: { ...syls[i], phraseEnd: last } });
+      from.push(i);
+    });
+    line = [];
+  };
+  syls.forEach((s, i) => {
+    line.push(i);
+    if (s.phraseEnd) flush();
+  });
+  flush();
+  return { notes, from };
+}
+
 /** The words a tune is sung on when none are given: "la" on every note. */
 export function la(tune: Tune): string {
   return tune.phrases.map((p) => p.map(() => "la").join(" ")).join("\n");

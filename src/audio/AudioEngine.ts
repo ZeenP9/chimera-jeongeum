@@ -35,6 +35,60 @@ const RESUME_WAIT_MS = 3000;
 /** the first moments' load is the wasm compiling, not the device's speed */
 const WARM_UP_MS = 2000;
 
+/** The room's decay time (s): a furnished small room, not a hall. */
+const ROOM_RT60 = 0.3;
+
+/** Dry and wet gains for a room amount: the dry voice gives way a little as the room comes in. */
+function roomGains(v: number): { dry: number; wet: number } {
+  return { dry: 1 - 0.3 * v, wet: v };
+}
+
+/**
+ * A small room's impulse response, made here (no file to fetch): six early reflections in the
+ * first 35 ms, then a noise tail that decays 60 dB in ROOM_RT60 and loses its highs as it goes.
+ * Each channel has unit energy, so the wet path is about as loud as the dry one before its gain.
+ * The noise is seeded: the room is the same on every load.
+ */
+function roomImpulse(ctx: BaseAudioContext): AudioBuffer {
+  const fs = ctx.sampleRate;
+  const n = Math.round(fs * (ROOM_RT60 * 1.3 + 0.06));
+  const buf = ctx.createBuffer(2, n, fs);
+  let seed = 0x5eed1234;
+  const rand = () => {
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    return (seed >>> 0) / 4294967296;
+  };
+  const gauss = () => Math.sqrt(-2 * Math.log(rand() + 1e-12)) * Math.cos(2 * Math.PI * rand());
+  const aLow = 1 - Math.exp((-2 * Math.PI * 3500) / fs);
+  const aHigh = Math.exp((-2 * Math.PI * 150) / fs);
+  const pre = Math.round(fs * 0.008);
+  for (let ch = 0; ch < 2; ch++) {
+    const h = buf.getChannelData(ch);
+    for (let k = 0; k < 6; k++) h[Math.round(fs * (0.004 + 0.031 * rand()))] += (0.25 + 0.35 * rand()) * (rand() < 0.5 ? -1 : 1);
+    let low = 0;
+    for (let i = 0; i + pre < n; i++) {
+      const t = i / fs;
+      const x = gauss() * Math.pow(10, (-3 * t) / ROOM_RT60);
+      low += aLow * (x - low);
+      const dark = Math.min(1, t / (ROOM_RT60 * 0.5));
+      h[i + pre] += 0.12 * Math.min(1, t / 0.02) * ((1 - dark) * x + dark * low);
+    }
+    // no rumble below the voice
+    let xPrev = 0, y = 0, energy = 0;
+    for (let i = 0; i < n; i++) {
+      y = aHigh * (y + h[i] - xPrev);
+      xPrev = h[i];
+      h[i] = y;
+      energy += y * y;
+    }
+    const g = 1 / Math.sqrt(energy);
+    for (let i = 0; i < n; i++) h[i] *= g;
+  }
+  return buf;
+}
+
 export class AudioEngine {
   ctx: AudioContext | null = null;
   private node: AudioWorkletNode | null = null;
@@ -47,6 +101,10 @@ export class AudioEngine {
   /** "close mic" chain: proximity bass, presence, compression (beatboxers cup the mic) */
   private micIn: AudioNode | null = null;
   private micOn = false;
+  /** a small room after the voice: how much of it is mixed in (0 = the dry voice, as the engine makes it) */
+  private room = 0;
+  private roomDry: GainNode | null = null;
+  private roomWet: GainNode | null = null;
   latest: TelemetryMessage | null = null;
   /** performance.now() when `latest` arrived */
   private latestAt = 0;
@@ -177,10 +235,23 @@ export class AudioEngine {
     shelf.connect(presence).connect(comp).connect(makeup).connect(master);
     this.micIn = shelf;
     node.connect(this.micOn ? shelf : master);
-    master.connect(ctx.destination);
-    master.connect(analyser);
-    master.connect(fast);
-    master.connect(scope);
+    // a small room: the voice dry, plus the same voice through the room's impulse response
+    const out = ctx.createGain();
+    const dry = ctx.createGain();
+    const wet = ctx.createGain();
+    const conv = ctx.createConvolver();
+    conv.normalize = false;
+    conv.buffer = roomImpulse(ctx);
+    master.connect(dry).connect(out);
+    master.connect(conv).connect(wet).connect(out);
+    this.roomDry = dry;
+    this.roomWet = wet;
+    dry.gain.value = roomGains(this.room).dry;
+    wet.gain.value = roomGains(this.room).wet;
+    out.connect(ctx.destination);
+    out.connect(analyser);
+    out.connect(fast);
+    out.connect(scope);
     node.port.onmessage = (e: MessageEvent<FromWorklet>) => this.receive(e.data);
     // a rebuild comes from no gesture, and a browser may hold the new context until there is one
     // (its resume() then doesn't settle until then): the next tap or key resumes it, and nothing
@@ -423,6 +494,15 @@ export class AudioEngine {
     if (!this.node || !this.master || !this.micIn) return;
     this.node.disconnect();
     this.node.connect(on ? this.micIn : this.master);
+  }
+
+  /** How much of the small room is mixed into the output: 0 (dry) to 1. The plugin has no room: the host adds one. */
+  setRoom(v: number): void {
+    this.room = Math.min(1, Math.max(0, v));
+    if (inPlugin || !this.ctx || !this.roomDry || !this.roomWet) return;
+    const g = roomGains(this.room), t = this.ctx.currentTime;
+    this.roomDry.gain.setTargetAtTime(g.dry, t, 0.02);
+    this.roomWet.gain.setTargetAtTime(g.wet, t, 0.02);
   }
 
   setBeat(m: { steps?: import("../wasm/types.ts").BeatStep[] | (import("../wasm/types.ts").BeatStep | null)[]; bpm?: number; swing?: number; playing?: boolean; preset?: string | null }): void {

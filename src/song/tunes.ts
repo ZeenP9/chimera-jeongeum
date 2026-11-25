@@ -16,6 +16,12 @@ export interface Tune {
   phrases: [number, number][][];
   /** a demo song's own words: choosing it puts them in the lyrics, and Sing sings them a syllable to a note */
   lyrics?: string;
+  /**
+   * 正音: 읽기용 곡. 가사를 악구에 끼워 맞추지 않고 음절마다 같은 길이의 음 하나를 준다 (fit.ts `readSong`):
+   * 줄 안에서 `fall` 반음을 서서히 내려가고 줄 끝 음절은 `end` 반음 더 내려가며, 비브라토는 없다.
+   * `phrases` 의 첫 음이 읽는 높이.
+   */
+  read?: { fall: number; end: number };
 }
 
 /** the demo songs the moods take their melodies from */
@@ -29,6 +35,9 @@ function fromDemo(id: string, name: string, demo: string, sizes: number[]): Tune
   const phrases = sizes.map((n) => d.notes.slice(at, (at += n)).map(([m, b]): [number, number] => [m, b]));
   return { id, name, bpm: d.bpm, octave: d.octave, phrases };
 }
+
+/** 읽기용 곡의 한 줄 (가사가 없을 때 "la" 로 읽는 길이): 라3, 음절마다 한 박, 줄 끝은 길게 */
+const READ_LINE: [number, number][] = [...Array.from({ length: 7 }, (): [number, number] => [57, 1]), [57, 2.2]];
 
 const MOODS: Tune[] = [
   // "Made of air", the instrument's own: minor, unhurried
@@ -86,6 +95,9 @@ const MOODS: Tune[] = [
     ],
   },
   fromDemo("twinkle", "Twinkle, twinkle", "Twinkle, twinkle", [7, 7]),
+  // 正音: 문장 읽기. 한 음으로 평평하게 / 줄 안에서 조금씩 내려가고 끝을 내리는 말투
+  { id: "read-flat", name: "Reading (flat)", bpm: 280, octave: { male: -1, female: 0, child: 0 }, phrases: [READ_LINE], read: { fall: 0, end: 0 } },
+  { id: "read-fall", name: "Reading (falling)", bpm: 280, octave: { male: -1, female: 0, child: 0 }, phrases: [READ_LINE], read: { fall: 2, end: 2 } },
 ];
 
 /** every other demo song as written: one phrase, its own words (a song added to the engine's catalog shows up here) */

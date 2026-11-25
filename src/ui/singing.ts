@@ -17,7 +17,7 @@ import { EXHALE_LABEL } from "../wasm/engine.ts";
 import type { Gesture } from "../wasm/types.ts";
 import { nearestBody, type BodyMix } from "./body.ts";
 import { TUNES } from "../song/tunes.ts";
-import { fitSong, la } from "../song/fit.ts";
+import { fitSong, la, readSong } from "../song/fit.ts";
 
 /** A note on the piano roll, on the voice clock (s); t1 is null while it is held. */
 export interface RollNote {
@@ -433,11 +433,14 @@ export async function playTune(id: string, body: BodyMix, ready?: () => Promise<
           notes: tune.phrases[0].map(([midi, beats], i) => ({ midi: midi + shift, beats, syl: own[i % own.length] })),
           from: tune.phrases[0].map((_, i) => i % own.length),
         }
-      : fitSong(tune, words, shift);
+      : tune.read
+        ? readSong(tune, words, shift)
+        : fitSong(tune, words, shift);
   if (!notes.length) return false;
   const bpm = tune.bpm * st.tempo;
   const t0 = 0.35;
-  const plan = planSong(notes, { body, bpm, t0, vibrato: st.vibrato });
+  // 읽기용 곡은 비브라토 없이
+  const plan = planSong(notes, { body, bpm, t0, vibrato: tune.read ? 0 : st.vibrato });
   hooks.onStart?.();
   const beat = 60 / bpm;
   let t = t0;

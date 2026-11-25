@@ -1,3 +1,4 @@
+import { inPlugin } from "../../audio/pluginBridge.ts";
 import { useStore } from "../store.ts";
 import { EncoderPages, type EncoderPage } from "./Encoder.tsx";
 
@@ -20,6 +21,8 @@ export function VoiceControls() {
   const setSource = useStore((st) => st.setSource);
   const a = useStore((st) => st.artic);
   const setArtic = useStore((st) => st.setArtic);
+  const room = useStore((st) => st.room);
+  const setRoom = useStore((st) => st.setRoom);
   const pages: EncoderPage[] = [
     {
       name: "Voice",
@@ -68,6 +71,8 @@ export function VoiceControls() {
         { label: "False folds", value: a.ventricular, min: 0, max: 1, onChange: (v) => setArtic({ ventricular: v }), format: pct },
       ],
     },
+    // a small room after the voice (the plugin's host adds its own)
+    ...(inPlugin ? [] : [{ name: "Room", encoders: [{ label: "Room", value: room, min: 0, max: 0.5, onChange: setRoom, format: pct }] }]),
   ];
   return <EncoderPages label="Voice" pages={pages} />;
 }

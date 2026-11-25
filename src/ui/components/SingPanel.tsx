@@ -108,6 +108,8 @@ function SongControls() {
   const setTempo = useSing((s) => s.setTempo);
   const key = useSing((s) => s.key);
   const setKey = useSing((s) => s.setKey);
+  const room = useStore((s) => s.room);
+  const setRoom = useStore((s) => s.setRoom);
   return (
     <EncoderPages
       label="Song voice"
@@ -134,6 +136,8 @@ function SongControls() {
                 ],
               },
             ]),
+        // a small room after the voice (the plugin's host adds its own)
+        ...(inPlugin ? [] : [{ name: "Room", encoders: [{ label: "Room", value: room, min: 0, max: 0.5, onChange: setRoom, format: (v: number) => ({ value: String(Math.round(v * 100)), unit: "%" }) }] }]),
         {
           name: "Tone",
           encoders: [{ label: "Bright", value: source.brightness, min: 0, max: 1, onChange: (v) => setSource({ brightness: v }), format: (v) => ({ value: String(Math.round(v * 100)), unit: "%" }) }],

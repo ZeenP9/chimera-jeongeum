@@ -86,6 +86,9 @@ interface State {
   setSource: (v: Partial<VoiceSource>) => void;
   setArtic: (v: Partial<HumanArtic>, tipFree?: boolean) => void;
   setVolume: (v: number) => void;
+  /** how much of a small room is mixed into the voice (0 = dry, as the engine makes it) */
+  room: number;
+  setRoom: (v: number) => void;
   setHold: (h: boolean) => void;
   /** Breathe: on (starting the audio first, if need be) or off */
   toggleBreath: () => Promise<void>;
@@ -125,6 +128,7 @@ function updateGate(s: { hold: boolean; heldNotes: number[]; mode: Mode; keyCall
 /** Everything the voice plays from, sent to an engine that knows none of it (a new one). */
 function sendState(s: State) {
   engine.setVolume(s.volume);
+  engine.setRoom(s.room);
   if (!sameBody(s.body, PRESETS.male)) engine.setBody(s.body);
   engine.setSource(s.source);
   engine.setArtic(s.artic, s.tipFree);
@@ -170,6 +174,8 @@ export const useStore = create<State>((set, get) => ({
   })(),
   tipFree: true,
   volume: 0.8,
+  // 19 %: the room 14 dB under the voice
+  room: 0.19,
   hold: false,
   heldNotes: [],
   view: { pressure: true, particles: true, grid: false, calipers: true, threeD: false },
@@ -339,6 +345,10 @@ export const useStore = create<State>((set, get) => ({
   setArtic: (v, tipFree) => {
     set((s) => ({ artic: { ...s.artic, ...v }, tipFree: tipFree ?? s.tipFree }));
     engine.setArtic(v, tipFree);
+  },
+  setRoom: (v) => {
+    set({ room: v });
+    engine.setRoom(v);
   },
   setVolume: (v) => {
     set({ volume: v });
