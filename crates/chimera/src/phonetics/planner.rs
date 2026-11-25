@@ -369,6 +369,30 @@ fn trill_open(closed: &ArticPatch) -> ArticPatch {
 
 /// velum port area (cm²) of a nasalized vowel, and the ramps of its lowering and raising (s)
 const NASAL_VOWEL_PORT: f64 = 0.3;
+/// fork: what a nasalized vowel does differently on the female body: its velum port (cm²), and
+/// its lips where they differ from the oral vowel's (`lipAp`, `lipWidth`) (user, 2026-11-25).
+/// At the common port ɒ̃ sent the least by the nose of the 正音 nasal vowels (nose against mouth
+/// -14.4 dB, for ɔ̃ -7.4): its mouth is the most open, and a speaker lowers the velum further
+/// for an open vowel. Opening the port alone saturates (0.45 -12.9, 0.6 -12.2, 0.8 -11.7, 1.3
+/// -11.1 dB) and the lips alone needed 0.27 cm, less than J. Beck's u (0.5 cm). Together: port
+/// 0.6 and lips rounded to 0.48 x 1.7 cm (ɒ: 0.98 x 2.5), as Paris French rounds its "an",
+/// give -10.8 dB. The other nasal vowels keep the common port.
+const NASAL_POSTURE: &[(&str, f64, f64, f64)] = &[("ɒ", 0.6, 0.53, 0.24)];
+
+fn nasal_port(ipa: &str, body: BodyMix) -> f64 {
+    let female = body.weights()[1].1;
+    NASAL_POSTURE.iter().find(|p| p.0 == ipa).map_or(NASAL_VOWEL_PORT, |p| NASAL_VOWEL_PORT + female * (p.1 - NASAL_VOWEL_PORT))
+}
+
+fn nasal_lips(ipa: &str, body: BodyMix, v: &mut ArticPatch) {
+    let Some(&(_, _, ap, width)) = NASAL_POSTURE.iter().find(|p| p.0 == ipa) else { return };
+    let female = body.weights()[1].1;
+    for (k, to) in [(ArticKey::LipAp, ap), (ArticKey::LipWidth, width)] {
+        if let Some(x) = v.get(k) {
+            v.set(k, x + female * (to - x));
+        }
+    }
+}
 const NASAL_VOWEL_RAMP: f64 = 0.04;
 
 #[derive(Clone, Copy)]
@@ -433,7 +457,10 @@ pub fn plan_timed<'a>(input: impl Iterator<Item = TimedSegment<'a>>, o: &PlanOpt
         }
     }
     for s in segs.iter_mut() {
-        let v = vowel_artic(s.ipa, body);
+        let mut v = vowel_artic(s.ipa, body);
+        if let (Some(v), true) = (v.as_mut(), s.nasalized == Some(true)) {
+            nasal_lips(s.ipa, body, v);
+        }
         if v.is_some() {
             s.vowel = v;
         } else {
@@ -499,7 +526,7 @@ pub fn plan_timed<'a>(input: impl Iterator<Item = TimedSegment<'a>>, o: &PlanOpt
             let end = times[(i + 1..segs.len()).take_while(|&j| segs[j].glide_from).last().unwrap_or(i)].t1;
             if s.nasalized == Some(true) {
                 // nasalized: the velum is down
-                gestures.push(Gesture::new(t0, end, NASAL_VOWEL_RAMP, NASAL_VOWEL_RAMP, 4.0, one(ArticKey::Velum, NASAL_VOWEL_PORT)).label("velum"));
+                gestures.push(Gesture::new(t0, end, NASAL_VOWEL_RAMP, NASAL_VOWEL_RAMP, 4.0, one(ArticKey::Velum, nasal_port(s.ipa, body))).label("velum"));
             }
             if s.breathy == Some(true) {
                 // breathy: the folds part-open, as for /ɦ/
