@@ -53,7 +53,7 @@ fn the_vowel_chart_matches_the_users_table() {
     // 사용자 지정 2026-11-23: 모음사각도의 IPA 모음과 正音 모음
     for (typed, vowel) in [
         ("ᅟᆚ", "ø"), ("ᅟᆛ", "y"), ("ㆉ", "œ"), ("ᅟᆟ", "ɔ̞"), ("ᅙᅵ", "ɪ"), ("ᅟᅵᇹ", "ɪ"),
-        ("ᅟힺ", "ɘ"), ("에", "e̞"), ("이", "i"), ("애", "ɛ"), ("아", "ɐ̞"), ("ᅟퟅ", "ɑ"), ("ᅙᆞ", "ə"), ("오", "o̞"), ("ᅟᆞᅢ", "æ"), ("ㆍㅐ", "æ"), ("ᅟᆜᅮ", "ʏ"), ("ᅟᅵᅳᅮ", "ʏ"),
+        ("ᅟힺ", "ɘ"), ("에", "e̞"), ("이", "i"), ("애", "ɛ"), ("아", "a"), ("ᅟퟅ", "ɑ"), ("ᅙᆞ", "ə"), ("오", "o̞"), ("ᅟᆞᅢ", "æ"), ("ㆍㅐ", "æ"), ("ᅟᆜᅮ", "ʏ"), ("ᅟᅵᅳᅮ", "ʏ"),
     ] {
         let s = read(typed);
         assert_eq!(s.len(), 1, "{typed}");
@@ -88,10 +88,10 @@ fn the_female_bodys_vowels_keep_the_charts_order() {
 
 #[test]
 fn the_jeongeum_vowels_take_their_symbol_from_the_syllable() {
-    // 사용자 지정 2026-11-23. ㅔ [e̞] whatever the onset; ㅐ [ɛ]; ㅚ [ø̞]; ㅏ [ɐ̞]; ퟅ [ɑ]; ᆟ [ɔ̞].
+    // 사용자 지정 2026-11-23. ㅔ [e̞] whatever the onset; ㅐ [ɛ]; ㅚ [ø̞]; ㅏ [a] (2026-11-26; was [a]); ퟅ [ɑ]; ᆟ [ɔ̞].
     // ㅣ ㅡ ㅓ ㅗ by the coda: none or a 정음 sonorant (ㄴ ㄹ ㅁ ㅿ ㆁ, ㅇ) → i ɤ ʌ o̞, any other → ɪ ɯ ɤ̞ o
     for (typed, v) in [
-        ("에", "e̞"), ("게", "e̞"), ("세", "e̞"), ("네", "e̞"), ("애", "ɛ"), ("외", "ø̞"), ("아", "ɐ̞"), ("악", "ɐ̞"), ("ᅟퟅ", "ɑ"), ("ᅟᆟ", "ɔ̞"),
+        ("에", "e̞"), ("게", "e̞"), ("세", "e̞"), ("네", "e̞"), ("애", "ɛ"), ("외", "ø̞"), ("아", "a"), ("악", "a"), ("ᅟퟅ", "ɑ"), ("ᅟᆟ", "ɔ̞"),
         ("이", "i"), ("인", "i"), ("잉", "i"), ("익", "ɪ"), ("잎", "ɪ"), ("있", "ɪ"),
         ("으", "ɤ"), ("그", "ɤ"), ("은", "ɤ"), ("극", "ɯ"), ("윽", "ɯ"),
         ("어", "ʌ"), ("거", "ʌ"), ("언", "ʌ"), ("업", "ɤ̞"), ("걱", "ɤ̞"),
@@ -228,7 +228,7 @@ fn eo_then_ngu_is_the_portuguese_nasal_diphthong() {
 /// θ ð 는 초성 ㅌ ㄷ + 모음의 ㅡ + 받침 ㅿ 세 성분이 다 있을 때만; ㅡ 가 없으면 받침 ㅿ 은 권설 (사용자 지정 2026-11-24).
 #[test]
 fn the_dental_fricatives_need_all_three_parts() {
-    for (w, onset, v) in [("ᄐힺᇫ", "θ", "ʌ"), ("ᄐힹᇫ", "θ", "ɐ̞"), ("타ᇫ", "ʈ", "ɐ̞"), ("터ᇫ", "ʈ", "ʌ"), ("ᄃힺᇫ", "ð", "ʌ"), ("다ᇫ", "ɖ", "ɐ̞"), ("따ᇫ", "ʈ", "ɐ̞")] {
+    for (w, onset, v) in [("ᄐힺᇫ", "θ", "ʌ"), ("ᄐힹᇫ", "θ", "a"), ("타ᇫ", "ʈ", "a"), ("터ᇫ", "ʈ", "ʌ"), ("ᄃힺᇫ", "ð", "ʌ"), ("다ᇫ", "ɖ", "a"), ("따ᇫ", "ʈ", "a")] {
         let syl = lyrics_to_syllables(w, &EnglishG2P::new());
         assert_eq!(syl[0].onset[0].ipa, onset, "{w}");
         assert_eq!(syl[0].nucleus.ipa, v, "{w}");
@@ -246,7 +246,7 @@ fn the_dental_fricatives_need_all_three_parts() {
 /// 듸ᇫㅅ = 영어 this [ðɪs], 듸ᇫ스 = 한국인이 외래어로 읽는 [ðɪ sɤ].
 #[test]
 fn a_lone_consonant_letter_is_a_bare_consonant() {
-    for (w, ipa) in [("듸ᇫㅅ", "ðɪs"), ("듸ᇫ스", "ðɪ sɤ"), ("틔ᇫᆼㅋ", "θɪŋk"), ("ㅅ타", "stɐ̞"), ("버스", "pʌ sɤ"), ("ㅸ", "βə"), ("ㆄ", "fə")] {
+    for (w, ipa) in [("듸ᇫㅅ", "ðɪs"), ("듸ᇫ스", "ðɪ sɤ"), ("틔ᇫᆼㅋ", "θɪŋk"), ("ㅅ타", "sta"), ("버스", "pʌ sɤ"), ("ㅸ", "βə"), ("ㆄ", "fə")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }
@@ -254,7 +254,7 @@ fn a_lone_consonant_letter_is_a_bare_consonant() {
 /// 받침 ㅿ = 권설음화: 혀끝을 쓰지 않는 초성에서는 모음 뒤의 권설 접근음 [ɻ] (파ᇫ = par; 사용자 지정 2026-11-24).
 #[test]
 fn a_bansiot_coda_after_a_non_coronal_onset_is_a_retroflex_approximant() {
-    for (w, ipa) in [("파ᇫ", "pɐ̞ɻ"), ("가ᇫ", "kɐ̞ɻ"), ("아ᇫ", "ɐ̞ɻ"), ("모ᇫ", "mo̞ɻ"), ("버ᇫ", "pɝ"), ("어ᇫ", "ɝ"), ("다ᇫ", "ɖɐ̞")] {
+    for (w, ipa) in [("파ᇫ", "paɻ"), ("가ᇫ", "kaɻ"), ("아ᇫ", "aɻ"), ("모ᇫ", "mo̞ɻ"), ("버ᇫ", "pɝ"), ("어ᇫ", "ɝ"), ("다ᇫ", "ɖa")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }
@@ -263,7 +263,7 @@ fn a_bansiot_coda_after_a_non_coronal_onset_is_a_retroflex_approximant() {
 /// (산스크리트 jaṇ = 저ᇈ). 북경어의 즤 츼 는 ㅢ 로 적어 겹치지 않는다 (사용자 지정 2026-11-24).
 #[test]
 fn a_bansiot_coda_makes_a_coronal_onset_retroflex() {
-    for (w, ipa) in [("나ᇫ", "ɳɐ̞"), ("사ᇫ", "ʂɐ̞"), ("자ᇫ", "dʐɐ̞"), ("저ᇫ", "dʐʌ"), ("차ᇫ", "tʂɐ̞"), ("저ᇈ", "dʐʌɳ"), ("셔ᇈ", "ʂʌɳ"), ("가ᇈ", "kɐ̞ɳ"), ("떠ᇫ", "ʈʌ"), ("터ᇫ", "ʈʌ"), ("더ᇫ", "ɖʌ"), ("셔ᇫ", "ʂʌ"), ("즤", "tʂʅ"), ("저", "tɕʌ")] {
+    for (w, ipa) in [("나ᇫ", "ɳa"), ("사ᇫ", "ʂa"), ("자ᇫ", "dʐa"), ("저ᇫ", "dʐʌ"), ("차ᇫ", "tʂa"), ("저ᇈ", "dʐʌɳ"), ("셔ᇈ", "ʂʌɳ"), ("가ᇈ", "kaɳ"), ("떠ᇫ", "ʈʌ"), ("터ᇫ", "ʈʌ"), ("더ᇫ", "ɖʌ"), ("셔ᇫ", "ʂʌ"), ("즤", "tʂʅ"), ("저", "tɕʌ")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }
@@ -271,7 +271,7 @@ fn a_bansiot_coda_makes_a_coronal_onset_retroflex() {
 /// ㅡ 는 유성 표지: ㅈ ㄷ ㅂ + ㅡ결합 모음은 유성음 + 남은 모음 (ᄌힺ = 산스크리트 ja, ᄌힹ = jā; 사용자 지정 2026-11-24).
 #[test]
 fn a_combined_eu_vowel_voices_its_onset() {
-    for (w, ipa) in [("ᄌힺ", "dʑʌ"), ("ᄌힹ", "dʑɐ̞"), ("ᄃힹ", "dɐ̞"), ("ᄇힺ", "bʌ"), ("저", "tɕʌ")] {
+    for (w, ipa) in [("ᄌힺ", "dʑʌ"), ("ᄌힹ", "dʑa"), ("ᄃힹ", "da"), ("ᄇힺ", "bʌ"), ("저", "tɕʌ")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }
@@ -281,14 +281,14 @@ fn a_combined_eu_vowel_voices_its_onset() {
 #[test]
 fn h_aspirates_its_neighbour_and_t_palatalises_before_i() {
     for (w, ipa) in [
-        ("좋다", "tɕo̞ tɐ̞"),
+        ("좋다", "tɕo̞ ta"),
         ("놓고", "no̞ ko̞"),
-        ("좋아", "tɕo̞ ɐ̞"),
+        ("좋아", "tɕo̞ a"),
         ("놓은", "no̞ ɤn"),
-        ("입학", "i pɐ̞k"),
-        ("같이", "kɐ̞ tɕi"),
+        ("입학", "i pak"),
+        ("같이", "ka tɕi"),
         ("굳이", "ku dʑi"),
-        ("닫히다", "tɐ̞ tɕi dɐ̞"),
+        ("닫히다", "ta tɕi da"),
         ("붙여", "pu tɕjʌ"),
     ] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
@@ -304,7 +304,7 @@ fn h_aspirates_its_neighbour_and_t_palatalises_before_i() {
 /// 프랑스어 r: 받침 ㅎ + 다음 음절 ㄹ (Paris 빻리), 받을 음절이 없으면 겹받침 ㅎㄹ (merci 메ᇶ씨).
 #[test]
 fn the_french_r_is_h_then_l_or_the_hl_coda() {
-    for (w, ipa) in [("빻리", "pɐ̞ ʁi"), ("메ᇶ씨", "me̞ʁ ɕi"), ("멯ㄹ씨", "me̞ʁ ɕi")] {
+    for (w, ipa) in [("빻리", "pa ʁi"), ("메ᇶ씨", "me̞ʁ ɕi"), ("멯ㄹ씨", "me̞ʁ ɕi")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }

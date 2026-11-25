@@ -224,12 +224,12 @@ fn coda_sonorant(tail: &[char]) -> bool {
 
 /// Vowel jamo → (glide, vowel). The rule-bound ones are resolved by the onset (`son`) and the coda
 /// (`son_coda`): 정음 모음과 IPA 기호의 배정 (사용자 지정 2026-11-23) —
-///   ㅏ [ɐ̞] (ɐ 와 ä 의 중간) · ㅐ [ɛ] · ㅔ [e̞] (초성과 상관없이) · ㅚ [ø̞] · ퟅ [ɑ] · ᆟ [ɔ̞] (ɔ 와 ɒ 의 중간)
+///   ㅏ [a] (사용자 지정 2026-11-26: [ɐ̞] 789/1506 은 원본의 a 보다 F2 가 227 Hz 낮아 답답하게 들렸다) · ㅐ [ɛ] · ㅔ [e̞] (초성과 상관없이) · ㅚ [ø̞] · ퟅ [ɑ] · ᆟ [ɔ̞] (ɔ 와 ɒ 의 중간)
 ///   종성이 없거나 정음 sonorant 인 음절 / 그 밖의 종성인 음절:
 ///   ㅣ [i] / [ɪ] · ㅡ [ɤ] / [ɯ] · ㅓ [ʌ] / [ɤ̞] · ㅗ [o̞] / [o]
 ///   ㆍ 는 초성으로: 정음 sonorant 뒤 [ɑ], 그 밖 [ə]
 fn vowel(v: &[char], son: bool, son_coda: bool) -> Option<(&'static str, &'static str)> {
-    let a = "ɐ̞";
+    let a = "a";
     let eo = if son_coda { "ʌ" } else { "ɤ̞" };
     let eu = if son_coda { "ɤ" } else { "ɯ" };
     let o = if son_coda { "o̞" } else { "o" };
@@ -694,7 +694,7 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
             //   · 혀끝 초성 ㄷ ㄸ ㅌ ㄹ ㄴ ㅅ ㅈ ㅊ 은 초성이 권설음이 된다 (위에서).
             //   · ㅓ 는 r 물든 모음 (ᅟᅥᇫ = ɝ, 영어 ɜːr; ɜ 자체는 正音으로 정의하지 않는다 — 사용자 지정 2026-11-23).
             //   · 그 밖의 초성 (ㅍ ㅂ ㄱ ㅋ ㅁ ㅎ …, 초성 없음)은 혀끝을 쓰지 않으니 모음에 얹힌다: 모음 뒤에 권설
-            //     접근음 [ɻ] (파ᇫ = [pʰɐ̞ɻ], 영어 par 의 모음 뒤 r).
+            //     접근음 [ɻ] (파ᇫ = [pʰaɻ], 영어 par 의 모음 뒤 r).
             let coronal = matches!(w.lead, Some('ᄂ' | 'ᄃ' | 'ᄄ' | 'ᄅ' | 'ᄉ' | 'ᄊ' | 'ᄌ' | 'ᄍ' | 'ᄎ' | 'ᄐ' | 'ᅀ' | 'ᄙ' | 'ᄛ'));
             if !coronal && matches!(nucleus, "ʌ" | "ɤ̞") {
                 nucleus = "ɝ";
