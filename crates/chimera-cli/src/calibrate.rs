@@ -90,16 +90,16 @@ const BECK_LIP_AP: &[(&str, f64)] = &[
 /// 0.34 -> 0.55) and ɒ 677/957. o and u cannot: their protrusion, width and jaw are at their
 /// limits already, and opening the lips to 0.7 of hers raises F1 (o 433 -> 468, u 357 -> 388).
 /// o opens all the same (0.75 cm x 0.7 = 0.52 cm) and its target moved to what that gives,
-/// 468/852 (user). u opens to 0.38 cm at least (user) and keeps its target of 300/830, which it
-/// cannot reach: it pulls the fit to 377/904, where a nearer target (375/900) settled at 406/919,
-/// 11 Hz off ʊ's F1.
+/// 468/852 (user). u keeps its target of 300/830, which it cannot reach, and opens to 0.27 cm at
+/// least like y ʏ ʉ ʊ (user, 2026-11-25; 0.38 cm before, 377/904). It needs a start of its own
+/// (STARTS): from the generic guess the lower floor fell into another basin (jaw 0.05), 383/928.
 /// o̞ and ɔ̞ are midpoints of these vowels and take the midpoints of their floors (not readings):
 /// left free, o̞ fitted with its lips 0.12 cm apart, less than o's.
 /// u̠ is u on this body (user, 2026-11-24) and opens with it. y ʏ ʉ ʊ open to 0.27 cm at least
 /// (user, 2026-11-25; they had fitted 0.11 to 0.13 cm apart, where hers read 0.4 to 0.8 cm) and
 /// keep their formants within 1 %. œ opens to 0.65 cm (user: 0.6 to 0.75): it had fitted at
 /// 0.40 cm, less than the closer ø's 0.48 (her œ has no clean frame to read).
-const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("ʊ", 0.3), ("œ", 0.72), ("u", 0.42), ("u̠", 0.42), ("o", 0.58), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
+const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("ʊ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("o", 0.58), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
 /// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
 const W_BECK_LIP: f64 = 0.15;
 /// the share of her opening the model takes (user, 2026-11-25): she lay down and held each cardinal
@@ -190,6 +190,16 @@ fn start_from(ipa: &str, body: &str) -> Option<(&'static str, &'static str)> {
         _ => None,
     }
 }
+
+/// fork: starts given as postures (the 9 coordinates in `VOWEL_KEYS` order), for a vowel whose
+/// good basin no fitted entry reaches. Female u with its lips 0.27 cm apart at least: from the
+/// posture it had at 0.38 cm (4a3e784) it fits 351/924; from the generic guess 383/928, from the
+/// male u̠ the same, from the female ʊ 347/973 (all for a target of 300/830).
+/// u̠ is u on this body (user, 2026-11-24) and starts where u does, overriding its start_from.
+const STARTS: &[(&str, &str, [f64; 9])] = &[
+    ("u", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.9, -1.231, 0.0]),
+    ("u̠", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.9, -1.231, 0.0]),
+];
 
 /// The 9 fitted coordinates (`VOWEL_KEYS` order) of the entry `ipa` in a body's table.
 fn solved_posture(table: &[(String, Json)], ipa: &str) -> Option<Vec<f64>> {
@@ -342,6 +352,9 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 })
             {
                 x0 = start;
+            }
+            if let Some((_, _, p)) = STARTS.iter().find(|(v, b, _)| *v == vw.ipa && *b == bname) {
+                x0 = p.to_vec();
             }
             let jaw_prior = 0.2 + 1.5 * vw.height;
             let pinned = apical(vw.ipa, bname, i_lips);
