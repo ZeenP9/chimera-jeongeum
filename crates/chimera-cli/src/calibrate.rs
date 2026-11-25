@@ -99,7 +99,15 @@ const BECK_LIP_AP: &[(&str, f64)] = &[
 /// (user, 2026-11-25; they had fitted 0.11 to 0.13 cm apart, where hers read 0.4 to 0.8 cm) and
 /// keep their formants within 1 %. œ opens to 0.65 cm (user: 0.6 to 0.75): it had fitted at
 /// 0.40 cm, less than the closer ø's 0.48 (her œ has no clean frame to read).
-const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("ʊ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("o", 0.58), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
+/// fork: lip limits the user set outright (2026-11-26), in the model's units: the least `lipAp`
+/// and the least `lipWidth`. y: lips 0.45 cm apart and 1.5 cm wide at least (it had fitted
+/// 0.27 x 1.0 cm). ɯ: 0.25 cm apart at least. Held 0.4 cm apart it fitted 411/1379 for
+/// 375/1250, F2 100 Hz higher than with its lips free, 0.23 cm (the root, at its limit, is all
+/// that lowers an unrounded F2).
+/// o's floor in BECK_LIP_AP_ROUND is 0.4 cm since the same day (0.52 before, where its F1
+/// stopped at 477 for 450); o̞'s stays the midpoint of the earlier floors.
+const LIP_FLOORS: &[(&str, f64, f64)] = &[("y", 0.5, 0.172), ("ɯ", 0.278, 0.0), ("ɤ", 0.389, 0.0)];
+const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("ʊ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("o", 0.445), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
 /// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
 const W_BECK_LIP: f64 = 0.15;
 /// the share of her opening the model takes (user, 2026-11-25): she lay down and held each cardinal
@@ -112,8 +120,10 @@ const BECK_LIP_SCALE: f64 = 0.7;
 /// 595). 0.7 is the least that keeps the nasals on time: at 0.5 its nearly shut lips closed /m/
 /// 9-10 ms early and nasal_spans failed (female median -7.4 ms, limit 7)
 const LIP_AP_WEDGE: f64 = 0.7;
-/// ɤ opens less too (user, 2026-11-25): at 0.7 of her reading it came out 9 % high in F1 and F2
-const LIP_AP_RAMS_HORN: f64 = 0.5;
+/// ɤ opens less too (user, 2026-11-25): at 0.7 of her reading it came out 9 % high in F1 and F2.
+/// 0.35 cm since 2026-11-26 (0.45 before), and no less (LIP_FLOORS): the user allowed 0.35 cm for its
+/// new target 480/1260 (what brought it there was its start, STARTS, not the lips)
+const LIP_AP_RAMS_HORN: f64 = 0.389;
 /// ɤ̞ has no take of hers (its entry in BECK_LIP_AP is the ɤ–ʌ midpoint, unused): its lips part
 /// 0.45 cm (user, 2026-11-25), between ɤ's and ʌ's. On the unmeasured vowels' floor it had the
 /// lips of ə (0.80 x 2.6 cm)
@@ -204,6 +214,9 @@ fn start_from(ipa: &str, body: &str) -> Option<(&'static str, &'static str)> {
 /// male u̠ the same, from the female ʊ 347/973 (all for a target of 300/830).
 /// u̠ is u on this body (user, 2026-11-24) and starts where u does, overriding its start_from.
 const STARTS: &[(&str, &str, [f64; 9])] = &[
+    // fork: ɤ starts from where it stood for 460/1120 (2026-11-26). From the generic guess it fitted
+    // 516/1268 for 480/1260 (larynx -0.89), from here 486/1257
+    ("ɤ", "female", [1.85, 7.229, 0.758, 0.389, 0.0, 0.547, 0.9, -0.449, 0.0]),
     ("u", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.9, -1.231, 0.0]),
     ("u̠", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.9, -1.231, 0.0]),
 ];
@@ -466,6 +479,9 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 // fork: the rounded vowels' lips part at least as far as BECK_LIP_AP_ROUND says: the
                 // fit reaches the same formants with a taller, narrower, more protruded opening
                 if bname == "female" {
+                    if let Some(&(_, ap, width)) = LIP_FLOORS.iter().find(|(v, _, _)| *v == vw.ipa) {
+                        c += 5.0 * pow(js_max(0.0, ap - p[3]), 2.0) + 5.0 * pow(js_max(0.0, width - p[5]), 2.0);
+                    }
                     if let Some(&(_, ap)) = BECK_LIP_AP_ROUND.iter().find(|(v, _)| *v == vw.ipa) {
                         c += 5.0 * pow(js_max(0.0, ap - p[3]), 2.0);
                     }
