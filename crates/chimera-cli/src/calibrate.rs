@@ -82,7 +82,7 @@ const W_BECK_SOFT: f64 = 0.03;
 /// model's range (2.0) and sit at or near it. Lip width cannot be seen in a midsagittal scan.
 const BECK_LIP_AP: &[(&str, f64)] = &[
     ("i", 1.55), ("ɪ", 1.8), ("e", 1.8), ("ɛ", 2.0), ("æ", 2.0), ("a", 2.0),
-    ("ɨ", 1.6), ("ə", 1.45), ("ɯ", 0.75), ("ɤ", 1.3), ("ʌ", 1.9), ("ɑ", 1.55),
+    ("ɨ", 1.6), ("ə", 1.45), ("ɯ", 0.75), ("ɤ", 1.3), ("ɤ̞", 1.6), ("ʌ", 1.9), ("ɑ", 1.55),
 ];
 /// fork: the least her lips part in the rounded vowels that reach their formants as well with them
 /// open (user, 2026-11-25): 0.7 of the MRI2 reading (ɔ 1.5 cm, ɒ 1.4 cm), as `lipAp`. Refitted
@@ -114,6 +114,10 @@ const BECK_LIP_SCALE: f64 = 0.7;
 const LIP_AP_WEDGE: f64 = 0.7;
 /// ɤ opens less too (user, 2026-11-25): at 0.7 of her reading it came out 9 % high in F1 and F2
 const LIP_AP_RAMS_HORN: f64 = 0.5;
+/// ɤ̞ has no take of hers (its entry in BECK_LIP_AP is the ɤ–ʌ midpoint, unused): its lips part
+/// 0.45 cm (user, 2026-11-25), between ɤ's and ʌ's. On the unmeasured vowels' floor it had the
+/// lips of ə (0.80 x 2.6 cm)
+const LIP_AP_RAMS_HORN_LOWERED: f64 = 0.5;
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("i", 4.01, 7.96),
     ("e", 3.71, 7.71),
@@ -125,7 +129,10 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("y", 4.31, 8.05),
     ("ø", 3.71, 7.61),
     ("œ", 3.11, 6.45),
-    ("ʌ", 1.52, 5.28),
+    // not ʌ (user, 2026-11-25): her take puts the tongue lower than any other vowel's (5.28, the
+    // floor is 4.88). Held there it fitted 626/1074 for 595/1055 and resonances swept 1-5 kHz on
+    // the way in and out of it (안녕: a ping at each edge of 녕). Free, it fits 602/1049 with the
+    // tongue at (1.13, 6.60), and the sweep from 4.5 kHz is gone
     ("ɤ", 2.02, 6.84),
     ("ʉ", 3.71, 7.88),
     // ɪ stays held (user, 2026-11-25), short of its target (406 Hz for 385): free, it reached
@@ -393,6 +400,21 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 if min_area < min_ok {
                     c += 0.4 * pow((min_ok - min_area) / min_ok, 2.0);
                 }
+                // fork: ɒ uses everything the body has (user, 2026-11-26): no pull toward a jaw, a
+                // lip height, a root, a larynx or a tongue place, only its formants and its rounding
+                // (lips no wider than they were, 2.5 cm, and protruded). With the pulls it stopped
+                // at 689/972 for 740/940; without them it reaches 756/1019 for 780/1000.
+                let all_out = bname == "female" && vw.ipa == "ɒ";
+                if all_out {
+                    return c + 5.0 * pow(js_max(0.0, p[5] - 0.51), 2.0) + 2.0 * pow(js_max(0.0, 0.33 - p[4]), 2.0);
+                }
+                // fork: ɶ aims where ɐ̞ sounds (791/1476) and differs by its lips alone (user,
+                // 2026-11-26): at most 2.3 cm wide, at least 0.75 cm apart, protruded 0.1, and no
+                // other pull. With the pulls and lips 1.0 cm apart, protruded 0.2, it stopped at
+                // 730/1501; without them it reaches 791/1476 (lips 1.47 x 2.3 cm, jaw 1.84).
+                if bname == "female" && vw.ipa == "ɶ" {
+                    return c + 5.0 * pow(js_max(0.0, p[5] - 0.45), 2.0) + 2.0 * pow(p[4] - 0.1, 2.0) + 5.0 * pow(js_max(0.0, 0.833 - p[3]), 2.0);
+                }
                 c += w_jaw * pow(p[2] - jaw_prior, 2.0);
                 let open = vw.height > 0.6;
                 if vw.round {
@@ -430,6 +452,7 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                                 p[3] - match v {
                                     "ʌ" => LIP_AP_WEDGE,
                                     "ɤ" => LIP_AP_RAMS_HORN,
+                                    "ɤ̞" => LIP_AP_RAMS_HORN_LOWERED,
                                     // her open vowels' full reading is the model's limit already
                                     "a" | "ɛ" | "æ" => ap,
                                     _ => BECK_LIP_SCALE * ap,
