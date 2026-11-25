@@ -107,6 +107,10 @@ const BECK_LIP_AP: &[(&str, f64)] = &[
 /// o's floor in BECK_LIP_AP_ROUND is 0.4 cm since the same day (0.52 before, where its F1
 /// stopped at 477 for 450); o̞'s stays the midpoint of the earlier floors.
 const LIP_FLOORS: &[(&str, f64, f64)] = &[("y", 0.5, 0.172), ("ɯ", 0.278, 0.0), ("ɤ", 0.389, 0.0)];
+/// ø̞'s lip width, 1.65 cm (user, 2026-11-26), in the model's units: (1.65 / 0.9 - 1.1) / 3.3
+const OE_LOWERED_WIDTH: f64 = 0.2222;
+/// and protruded 0.3 (user, 2026-11-26); its lip height is free
+const OE_LOWERED_PROT: f64 = 0.3;
 const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("ʊ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("o", 0.445), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
 /// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
 const W_BECK_LIP: f64 = 0.15;
@@ -425,6 +429,12 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 // 2026-11-26): at most 2.3 cm wide, at least 0.75 cm apart, protruded 0.1, and no
                 // other pull. With the pulls and lips 1.0 cm apart, protruded 0.2, it stopped at
                 // 730/1501; without them it reaches 791/1476 (lips 1.47 x 2.3 cm, jaw 1.84).
+                // fork: ø̞ keeps only its lips (1.65 cm wide, protruded 0.3) and its formants (2026-11-26):
+                // with the jaw, tongue, root and larynx pulls it stayed at 491/1933 for 479/2001
+                // whatever the protrusion (0.59: 492/1943); free, the tongue goes 0.27 cm forward
+                if bname == "female" && vw.ipa == "ø̞" {
+                    return c + 5.0 * pow(p[5] - OE_LOWERED_WIDTH, 2.0) + 2.0 * pow(p[4] - OE_LOWERED_PROT, 2.0);
+                }
                 if bname == "female" && vw.ipa == "ɶ" {
                     return c + 5.0 * pow(js_max(0.0, p[5] - 0.45), 2.0) + 2.0 * pow(p[4] - 0.1, 2.0) + 5.0 * pow(js_max(0.0, 0.833 - p[3]), 2.0);
                 }
