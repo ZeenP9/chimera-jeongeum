@@ -157,6 +157,14 @@ export class MandarinLexicon {
  * (`lang`: English through the page's dictionary, see EnglishG2P, or Turkish), Korean, Russian,
  * and Mandarin once its lexicon is loaded.
  */
+/**
+ * 正音: the Mood page's reading switches, summed (ㅣ→ɨ is 1, the only one with a reading yet), for the text
+ * read from now on (crates/chimera/src/phonetics/jeongeum.rs `set_marks`).
+ */
+export function setJeongeumMarks(bits: number): void {
+  call("setJeongeumMarks", { bits });
+}
+
 export function lyricsToSyllables(text: string, lang: Lang = "en"): Syllable[] {
   return call("lyricsToSyllables", { text, lang });
 }

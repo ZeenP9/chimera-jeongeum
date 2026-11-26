@@ -35,23 +35,36 @@ const RESUME_WAIT_MS = 3000;
 /** the first moments' load is the wasm compiling, not the device's speed */
 const WARM_UP_MS = 2000;
 
-/** The room's decay time (s): a furnished small room, not a hall. */
-const ROOM_RT60 = 0.3;
-
 /** Dry and wet gains for a room amount: the dry voice gives way a little as the room comes in. */
 function roomGains(v: number): { dry: number; wet: number } {
   return { dry: 1 - 0.3 * v, wet: v };
 }
 
+/** A value that grows evenly in ratio from `a` (at 0) to `b` (at 1). */
+const span = (a: number, b: number, u: number) => a * Math.pow(b / a, Math.min(1, Math.max(0, u)));
+
 /**
- * A small room's impulse response, made here (no file to fetch): six early reflections in the
- * first 35 ms, then a noise tail that decays 60 dB in ROOM_RT60 and loses its highs as it goes.
- * Each channel has unit energy, so the wet path is about as loud as the dry one before its gain.
- * The noise is seeded: the room is the same on every load.
+ * The room's decay time (s, 60 dB) for a size and a liveness, both 0 to 1. A room's decay goes with its
+ * volume over its absorption, so each size has its own range: a small room 0.15 to 0.6 s, a large hall
+ * 0.8 to 3 s, from heavily furnished (0) to bare stone (1).
  */
-function roomImpulse(ctx: BaseAudioContext): AudioBuffer {
+export function roomDecaySeconds(size: number, decay: number): number {
+  return span(span(0.15, 0.8, size), span(0.6, 3, size), decay);
+}
+
+/**
+ * A room's impulse response, made here (no file to fetch). `size` (0 small room, 1 large hall) sets how far
+ * the walls are: the gap before the first reflection (8 to 50 ms), the spread of the six early
+ * reflections (35 to 120 ms) and how slowly the diffuse tail builds. `decay` sets how live the room is
+ * for that size (`roomDecaySeconds`). The tail is noise that loses its highs as it goes.
+ * Each channel has unit energy, so the wet path is about as loud as the dry one before its gain.
+ * The noise is seeded: the same settings give the same room on every load.
+ */
+function roomImpulse(ctx: BaseAudioContext, size: number, decay: number): AudioBuffer {
   const fs = ctx.sampleRate;
-  const n = Math.round(fs * (ROOM_RT60 * 1.3 + 0.06));
+  const rt60 = roomDecaySeconds(size, decay);
+  const preS = span(0.008, 0.05, size), early = span(0.035, 0.12, size), build = span(0.02, 0.08, size);
+  const n = Math.round(fs * (rt60 * 1.3 + preS + early + 0.03));
   const buf = ctx.createBuffer(2, n, fs);
   let seed = 0x5eed1234;
   const rand = () => {
@@ -63,17 +76,17 @@ function roomImpulse(ctx: BaseAudioContext): AudioBuffer {
   const gauss = () => Math.sqrt(-2 * Math.log(rand() + 1e-12)) * Math.cos(2 * Math.PI * rand());
   const aLow = 1 - Math.exp((-2 * Math.PI * 3500) / fs);
   const aHigh = Math.exp((-2 * Math.PI * 150) / fs);
-  const pre = Math.round(fs * 0.008);
+  const pre = Math.round(fs * preS);
   for (let ch = 0; ch < 2; ch++) {
     const h = buf.getChannelData(ch);
-    for (let k = 0; k < 6; k++) h[Math.round(fs * (0.004 + 0.031 * rand()))] += (0.25 + 0.35 * rand()) * (rand() < 0.5 ? -1 : 1);
+    for (let k = 0; k < 6; k++) h[Math.round(fs * (preS * 0.5 + (early - preS * 0.5) * rand()))] += (0.25 + 0.35 * rand()) * (rand() < 0.5 ? -1 : 1);
     let low = 0;
     for (let i = 0; i + pre < n; i++) {
       const t = i / fs;
-      const x = gauss() * Math.pow(10, (-3 * t) / ROOM_RT60);
+      const x = gauss() * Math.pow(10, (-3 * t) / rt60);
       low += aLow * (x - low);
-      const dark = Math.min(1, t / (ROOM_RT60 * 0.5));
-      h[i + pre] += 0.12 * Math.min(1, t / 0.02) * ((1 - dark) * x + dark * low);
+      const dark = Math.min(1, t / (rt60 * 0.5));
+      h[i + pre] += 0.12 * Math.min(1, t / build) * ((1 - dark) * x + dark * low);
     }
     // no rumble below the voice
     let xPrev = 0, y = 0, energy = 0;
@@ -105,6 +118,11 @@ export class AudioEngine {
   private room = 0;
   private roomDry: GainNode | null = null;
   private roomWet: GainNode | null = null;
+  /** the room's size and liveness (0 to 1 each), and the convolver that holds its impulse response */
+  private roomSize = 0;
+  private roomDecay = 0.5;
+  private roomConv: ConvolverNode | null = null;
+  private roomTimer: ReturnType<typeof setTimeout> | null = null;
   latest: TelemetryMessage | null = null;
   /** performance.now() when `latest` arrived */
   private latestAt = 0;
@@ -241,7 +259,8 @@ export class AudioEngine {
     const wet = ctx.createGain();
     const conv = ctx.createConvolver();
     conv.normalize = false;
-    conv.buffer = roomImpulse(ctx);
+    conv.buffer = roomImpulse(ctx, this.roomSize, this.roomDecay);
+    this.roomConv = conv;
     master.connect(dry).connect(out);
     master.connect(conv).connect(wet).connect(out);
     this.roomDry = dry;
@@ -503,6 +522,28 @@ export class AudioEngine {
     const g = roomGains(this.room), t = this.ctx.currentTime;
     this.roomDry.gain.setTargetAtTime(g.dry, t, 0.02);
     this.roomWet.gain.setTargetAtTime(g.wet, t, 0.02);
+  }
+
+  /**
+   * The room's size and how live it is (0 to 1 each). A new impulse response is made a moment after the
+   * knobs stop moving, and swapped in with the wet path dipped so the change doesn't click.
+   */
+  setRoomShape(size: number, decay: number): void {
+    const s = Math.min(1, Math.max(0, size)), d = Math.min(1, Math.max(0, decay));
+    if (s === this.roomSize && d === this.roomDecay) return;
+    this.roomSize = s;
+    this.roomDecay = d;
+    if (inPlugin || !this.ctx || !this.roomConv || !this.roomWet) return;
+    if (this.roomTimer) clearTimeout(this.roomTimer);
+    this.roomTimer = setTimeout(() => {
+      const ctx = this.ctx, conv = this.roomConv, wet = this.roomWet;
+      if (!ctx || !conv || !wet) return;
+      wet.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+      setTimeout(() => {
+        conv.buffer = roomImpulse(ctx, this.roomSize, this.roomDecay);
+        wet.gain.setTargetAtTime(roomGains(this.room).wet, ctx.currentTime, 0.02);
+      }, 60);
+    }, 150);
   }
 
   setBeat(m: { steps?: import("../wasm/types.ts").BeatStep[] | (import("../wasm/types.ts").BeatStep | null)[]; bpm?: number; swing?: number; playing?: boolean; preset?: string | null }): void {

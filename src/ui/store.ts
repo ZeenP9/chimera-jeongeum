@@ -4,7 +4,7 @@ import { inPlugin } from "../audio/pluginBridge.ts";
 import { DEFAULT_SOURCE, type VoiceSource } from "../wasm/engine.ts";
 import { NEUTRAL, restTip, type HumanArtic } from "../wasm/engine.ts";
 import { defaultF0, PRESETS, sameBody, type BodyMix } from "./body.ts";
-import { creatureById } from "../wasm/engine.ts";
+import { creatureById, setJeongeumMarks } from "../wasm/engine.ts";
 import type { ParamDef } from "../wasm/types.ts";
 import { BEAT_PRESETS, BASS_NOTE, beatReady, parseBeat, type BeatStep } from "../wasm/engine.ts";
 import { singNoteOn, singNoteOff, stopSinging } from "./singing.ts";
@@ -88,6 +88,17 @@ interface State {
   setVolume: (v: number) => void;
   /** how much of a small room is mixed into the voice (0 = dry, as the engine makes it) */
   room: number;
+  /** the room's size (0 small room, 1 large hall) and how live it is for that size (0 to 1) */
+  roomSize: number;
+  roomDecay: number;
+  setRoomShape: (shape: { roomSize?: number; roomDecay?: number }) => void;
+  /**
+   * 正音: Mood 페이지의 네 조각 스위치 (ㅣ→ɨ, ㆍ→○, ㅡ→ḥ, ㆆ→ʕ). 정음 기호가 IPA 보다 적어 겹치는 읽기를 고르는 미세
+   * 조정으로, 모두 꺼진 것이 기본이다. 지금은 ㅣ→ɨ 만 엔진에 알린다 (`setJeongeumMarks`); 나머지 셋은 기능이 정해지지
+   * 않아 켜고 끈 상태만 간직한다.
+   */
+  marks: { i: boolean; arae: boolean; eu: boolean; hieut: boolean };
+  toggleMark: (k: "i" | "arae" | "eu" | "hieut") => void;
   setRoom: (v: number) => void;
   setHold: (h: boolean) => void;
   /** Breathe: on (starting the audio first, if need be) or off */
@@ -129,6 +140,7 @@ function updateGate(s: { hold: boolean; heldNotes: number[]; mode: Mode; keyCall
 function sendState(s: State) {
   engine.setVolume(s.volume);
   engine.setRoom(s.room);
+  engine.setRoomShape(s.roomSize, s.roomDecay);
   if (!sameBody(s.body, PRESETS.male)) engine.setBody(s.body);
   engine.setSource(s.source);
   engine.setArtic(s.artic, s.tipFree);
@@ -176,6 +188,10 @@ export const useStore = create<State>((set, get) => ({
   volume: 0.8,
   // 19 %: the room 14 dB under the voice
   room: 0.19,
+  // a small room, 0.30 s
+  roomSize: 0,
+  roomDecay: 0.5,
+  marks: { i: false, arae: false, eu: false, hieut: false },
   hold: false,
   heldNotes: [],
   view: { pressure: true, particles: true, grid: false, calipers: true, threeD: false },
@@ -349,6 +365,17 @@ export const useStore = create<State>((set, get) => ({
   setRoom: (v) => {
     set({ room: v });
     engine.setRoom(v);
+  },
+  toggleMark: (k) => {
+    set((s) => ({ marks: { ...s.marks, [k]: !s.marks[k] } }));
+    const m = get().marks;
+    // only ㅣ → ɨ does anything yet: the other three slices keep their place and light, no more
+    setJeongeumMarks(m.i ? 1 : 0);
+  },
+  setRoomShape: (shape) => {
+    set(shape);
+    const st = get();
+    engine.setRoomShape(st.roomSize, st.roomDecay);
   },
   setVolume: (v) => {
     set({ volume: v });

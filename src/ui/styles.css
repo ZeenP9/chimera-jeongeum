@@ -1659,6 +1659,27 @@ button.primary.large {
 .enc-pointer { stroke: var(--slot); stroke-width: 1.6; stroke-linecap: round; }
 .enc-hub { fill: var(--slot); }
 
+/* 正音: the Mood page's four-slice switch, in the white slot */
+.enc-extra { display: grid; min-width: 0; }
+.jm-dial { width: min(76px, 100%); aspect-ratio: 1; }
+.jm-dial svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.jm-ring { fill: none; stroke: var(--slot); stroke-width: 1.1; opacity: 0.55; pointer-events: none; filter: drop-shadow(0 0 2px var(--slot)); }
+.jm-cut { stroke: var(--slot); stroke-width: 0.8; opacity: 0.4; pointer-events: none; }
+.jm-slice { fill: transparent; cursor: pointer; outline: none; }
+.jm-slice:hover { fill: color-mix(in srgb, var(--slot) 8%, transparent); }
+.jm-slice.on { fill: color-mix(in srgb, var(--slot) 12%, transparent); }
+.jm-slice:focus-visible { stroke: var(--slot); stroke-width: 1; stroke-dasharray: 2 2; }
+.jm-signs { pointer-events: none; }
+.jm-stroke { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.jm-fill { fill: currentColor; }
+.jm-jamo { color: var(--amber); filter: drop-shadow(0 0 1.2px var(--amber)); }
+.jm-dot { fill: var(--red); filter: drop-shadow(0 0 1.5px var(--red)); }
+/* an unlit legend is all but gone; lit, it glows */
+.jm-ipa { color: var(--white); opacity: 0.07; transition: opacity 0.15s; }
+.jm-ipa.on { opacity: 1; filter: drop-shadow(0 0 1.6px var(--white)) drop-shadow(0 0 4px var(--blue)); }
+.jm-o { fill: none; stroke: var(--white); stroke-width: 0.9; opacity: 0.07; transition: opacity 0.15s; }
+.jm-o.on { opacity: 1; filter: drop-shadow(0 0 1.6px var(--white)) drop-shadow(0 0 4px var(--blue)); }
+
 .enc-input {
   position: absolute;
   inset: 0;

@@ -11,6 +11,8 @@ export interface EncoderSpec {
   onChange: (v: number) => void;
   /** big numeral and its unit */
   format: (v: number) => { value: string; unit: string };
+  /** the colour slot (0 green, 1 red, 2 pink, 3 white) when it isn't the encoder's place in the row */
+  slot?: number;
 }
 
 const TICKS = 10;
@@ -98,6 +100,8 @@ export function Encoder(props: EncoderSpec & { slot: number }) {
 export interface EncoderPage {
   name: string;
   encoders: EncoderSpec[];
+  /** something that isn't an encoder, in the first free place of the row (正音: the Mood page's switch) */
+  extra?: ReactNode;
 }
 
 /**
@@ -120,7 +124,7 @@ export function EncoderPages(props: { pages: EncoderPage[]; footer?: ReactNode; 
         </div>
       )}
       <div className={`enc-row cols-${cols}`} role="group" aria-label={p.name}>
-        {Array.from({ length: cols }, (_, i) => i).map((i) => (p.encoders[i] ? <Encoder key={`${p.name}-${p.encoders[i].label}`} {...p.encoders[i]} slot={i} /> : <div key={`empty-${i}`} className="encoder empty" aria-hidden="true" />))}
+        {Array.from({ length: cols }, (_, i) => i).map((i) => (p.encoders[i] ? <Encoder key={`${p.name}-${p.encoders[i].label}`} {...p.encoders[i]} slot={p.encoders[i].slot ?? i} /> : p.extra && i === p.encoders.length ? <div key={`extra-${i}`} className="enc-extra">{p.extra}</div> : <div key={`empty-${i}`} className="encoder empty" aria-hidden="true" />))}
       </div>
       {props.footer && <div className="enc-footer">{props.footer}</div>}
     </div>
