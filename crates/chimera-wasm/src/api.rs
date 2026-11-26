@@ -136,6 +136,11 @@ fn dispatch(st: &mut State, req: &Value) -> Res {
         }
         // every built-in front end: pinyin, English or Turkish (`lang`, the language of
         // Latin-script words; unset: English), Korean, Russian, and Mandarin once its lexicon is loaded
+        // 正音: the Mood page's reading switches (jeongeum::MARK_* summed; only MARK_I does anything yet), from the next text read
+        "setJeongeumMarks" => {
+            chimera::phonetics::jeongeum::set_marks(arg::<u8>(req, "bits")?);
+            to_json(&true)
+        }
         "lyricsToSyllables" => to_json(&lyrics_in(&arg::<String>(req, "text")?, &st.g2p, &st.mandarin, arg::<Option<Lang>>(req, "lang")?.unwrap_or_default())),
         // Turkish needs no dictionary: its spelling rules are the G2P
         "trPhrases" => to_json(&turkish::to_phrases(&arg::<String>(req, "text")?)),

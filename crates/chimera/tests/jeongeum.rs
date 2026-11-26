@@ -296,15 +296,51 @@ fn h_aspirates_its_neighbour_and_t_palatalises_before_i() {
     // 인두 표지 ㅎ 뒤의 ㅂ ㄷ 은 그대로 (ᄄퟅᇂ빕 ṭabīb, 듷다)
     for (w, onset) in [("ᄄퟅᇂ빕", "p"), ("듷다", "t"), ("싫다", "t"), ("않다", "d")] {
         let syl = lyrics_to_syllables(w, &EnglishG2P::new());
-        assert_eq!(syl.last().unwrap().onset[0].ipa, onset, "{w}");
-        assert_ne!(syl.last().unwrap().onset[0].vot, Some(0.08), "{w}");
+        // 듷 = ðˤ 은 자음만인 음절이라 다 의 첫소리 앞에 붙는다 ([ðʕta]): ㄷ 은 첫소리의 마지막
+        assert_eq!(syl.last().unwrap().onset.last().unwrap().ipa, onset, "{w}");
+        assert_ne!(syl.last().unwrap().onset.last().unwrap().vot, Some(0.08), "{w}");
+    }
+}
+
+/// 받침 ㅅ ㅆ, 연음, 된소리, 인두 표지 (사용자 지정 2026-11-26).
+#[test]
+fn codas_link_to_a_vowel_and_s_is_unreleased_at_a_word_end() {
+    for (w, ipa) in [
+        ("여섯", "jʌ sɤ̞t"),
+        ("여섯은", "jʌ sɤ̞s ɤn"),
+        ("했었지", "hɛt sɤ̞t tɕʔi"),
+        ("먹어", "mʌ gʌ"),
+        ("물이", "mu ɾi"),
+        ("강이", "kaŋ i"),
+        ("아까", "a kʔa"),
+        ("아빠", "a pʔa"),
+        ("오또", "o̞ tʔo̞"),
+        ("가짜", "ka tɕʔa"),
+        ("알ᄅퟅᇂ아", "al ɾɑʕ a"),
+        ("듷아", "ðʕa"),
+        ("ᅀᅳᇂ아", "zʕa"),
+        ("ᄒퟅᇹ", "ħɑ"),
+    ] {
+        assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }
 
 /// 프랑스어 r: 받침 ㅎ + 다음 음절 ㄹ (Paris 빻리), 받을 음절이 없으면 겹받침 ㅎㄹ (merci 메ᇶ씨).
 #[test]
 fn the_french_r_is_h_then_l_or_the_hl_coda() {
-    for (w, ipa) in [("빻리", "pa ʁi"), ("메ᇶ씨", "me̞ʁ ɕi"), ("멯ㄹ씨", "me̞ʁ ɕi")] {
+    for (w, ipa) in [("빻리", "pʔa ʁi"), ("메ᇶ씨", "me̞ʁ ɕi"), ("멯ㄹ씨", "me̞ʁ ɕi")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
+}
+
+/// Mood 페이지 네 조각 스위치의 ㅣ → ɨ (사용자 지정 2026-11-26): 꺼진 것이 기본이고, 켜면 ᆜ 가 [ɨ].
+/// 나머지 세 조각은 자리만 있고 읽기를 바꾸지 않는다.
+#[test]
+fn the_i_switch_reads_the_yi_vowel_as_barred_i() {
+    use chimera::phonetics::jeongeum::{MARK_I, set_marks};
+    for (bits, w, ipa) in [(0, "ᄉᆜ", "ɕjɤ"), (MARK_I, "ᄉᆜ", "sɨ"), (MARK_I, "ᄇᆜ", "pɨ"), (MARK_I, "ᅙᆜ", "ʔɨ"), (0, "ᅙᆜ", "ʔɨ"), (MARK_I, "시", "ɕi")] {
+        set_marks(bits);
+        assert_eq!(read_pl(w).1, ipa, "{w} with switches {bits}");
+    }
+    set_marks(0);
 }

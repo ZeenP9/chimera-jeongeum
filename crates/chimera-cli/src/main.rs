@@ -138,6 +138,10 @@ fn run(args: Vec<String>) -> Result<(), String> {
 }
 
 fn main() -> ExitCode {
+    // 正音: CHIMERA_MARKS=i turns the ㅣ → ɨ reading switch on for this run
+    if std::env::var("CHIMERA_MARKS").is_ok_and(|v| v.split(',').any(|k| k.trim() == "i")) {
+        chimera::phonetics::jeongeum::set_marks(chimera::phonetics::jeongeum::MARK_I);
+    }
     match run(std::env::args().skip(1).collect()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
