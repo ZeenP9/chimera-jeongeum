@@ -26,7 +26,7 @@ fn a_lone_consonant_letter_is_read_with_the_vowel_of_heu_arae_a() {
 #[test]
 fn sanskrit_follows_the_books_spellings() {
     let text: Vec<String> = read("गांधी पारमिता भूमि विभेद घोंघा").into_iter().map(|s| s.0).collect();
-    assert_eq!(jamo(&text.concat()), jamo("간ᄃᆜ빠러미ᇹ따부후미ᄫᅵ베더고호ᇰᄀᆣ"));
+    assert_eq!(jamo(&text.concat()), jamo("간ᄃᆜ빠러미ᇹ따부후미ᄫᅵ베ㅡ더고호ᇰᄀᆣ"));
 }
 
 /// precomposed blocks as their jamo, so a spelling compares however its blocks are encoded
@@ -105,8 +105,8 @@ fn the_jeongeum_vowels_take_their_symbol_from_the_syllable() {
     // ᅟᆗ alone is [ʔʊ]
     let s = read("ᅟᆗ");
     assert_eq!((s[0].1.as_slice(), s[0].2.as_str()), (["ʔ".to_string()].as_slice(), "ʊ"));
-    // ㆍ still by the onset: ə, ɑ after a 정음 sonorant (ᄛ ㅿ count)
-    for (typed, v) in [("ᄇᆞ", "ə"), ("ᄂᆞ", "ɑ"), ("ᅀᆞ", "ɑ"), ("ᄛᆞ", "ɑ")] {
+    // ㆍ still by the onset: ə, ɐ after a 정음 sonorant (ᄛ ㅿ count; ɐ since 2026-11-27, ɑ before)
+    for (typed, v) in [("ᄇᆞ", "ə"), ("ᄂᆞ", "ɐ"), ("ᅀᆞ", "ɐ"), ("ᄛᆞ", "ɐ")] {
         assert_eq!(read(typed)[0].2, v, "{typed}");
     }
 }
@@ -169,24 +169,41 @@ fn polish_is_written_in_jeongeum_and_sounds_polish() {
     assert_eq!(read_pl("Pan się").1.split(' ').next(), Some("pan"));
 }
 
-/// ᆜ = [iɯ] (15세기 정음·중세국어의 소리로 본다; 사용자 지정 2026-11-26), [ɨ] 는 ᅙᆜ.
+/// 가로지른 ㅡ (ᅼ ᆣ ᆜ) 와 블록 + 낱글자 ㅡ 는 초성의 갈래로 읽는다 (사용자 지정 2026-11-27; 스위치가 모두 꺼진 중립):
+/// ㄱ ㄷ ㅂ ㅈ ㅸ 은 유성 자음 + 모음 + [ɤ], ㅋ ㅌ ㅍ ㅊ ㆄ 은 모음 + [ɤ̤], 정음 sonorant 는 모음 + [ɝ], ᄉᆜ 은 [ɕi].
+/// 초성 없는 ᆜ 는 [iɯ] (2026-11-26), [ɨ] 는 ᅙᆜ.
 #[test]
 fn typed_i_eu_is_i_then_eu() {
-    for (w, ipa) in [("ᄉᆜ", "ɕiɯ"), ("ᄃᆜ", "tiɯ"), ("ᄂᆜ", "niɯ"), ("ᅟᆜ", "iɯ"), ("ᄉᆜᆫ", "ɕiɯn"), ("ᄉᆜᆨ", "ɕiɯk"), ("ᅙᆜ", "ʔɨ")] {
+    for (w, ipa) in [
+        ("ᄉᆜ", "ɕiɤ̤"), ("ᄉᆜᆫ", "ɕiɤ̤n"), ("ᅟᆜ", "iɯ"), ("ᅙᆜ", "ʔɨ"),
+        ("ᄃᆜ", "diɤ"), ("ᄇᅼ", "bɐɤ"), ("ᄇᆣ", "baɤ"), ("ᄫᅼ", "βɐɤ"),
+        ("ᄏᅼ", "kɐɤ̤"), ("ᄐᆣ", "taɤ̤"), ("ᄎᆜ", "tɕiɤ̤"),
+        ("ᄂᆜ", "niɝ"), ("ᄂᅼ", "nɐɝ"), ("ᄆᆣ", "maɝ"),
+        ("베ㅡ", "be̞ɤ"), ("데ㅡ", "de̞ɤ"), ("배ㅡ", "bɛɤ"), ("케ㅡ", "ke̞ɤ̤"), ("메ㅡ", "me̞ɝ"),
+        // 초성 없음과 ㅎ ㄲ ㄸ ㅃ ㅉ ㅆ 은 모음 + [ɤ], ㅅ + ᅼ ᆣ 는 모음 + [h], ㅗㅡ = [oʊ] (2026-11-27 밤)
+        ("ᅟᅼ", "ɐɤ"), ("ᅟᆣ", "aɤ"), ("ᄒᅼ", "hɐɤ̤"), ("ᄒᆣ", "haɤ̤"), ("ᄒᆜ", "hiɤ̤"), ("ᄄᆣ", "tʔaɤ"), ("ᄊᆣ", "saɤ"), ("ᄉᅼ", "sɐɤ̤"), ("ᄉᆣ", "saɤ̤"),
+        ("세ㅡ", "se̞ɤ"), ("에ㅡ", "e̞ɤ"), ("오ㅡ", "oʊ"), ("노ㅡ", "noʊ"),
+    ] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
         let syl = lyrics_to_syllables(w, &EnglishG2P::new());
         assert_eq!(syl[0].nucleus.breathy, None, "{w}");
     }
 }
 
-/// ᅼ ᆣ 의 숨은 모음 앞 (터진 직후); 구절 끝에서만 모음 뒤에도 숨이 따른다 (사용자 지정 2026-11-24).
+/// 데바나가리로 넣은 유성 유기음: 숨은 모음 앞 (터진 직후), 구절 끝에서만 모음 뒤에도 숨이 따른다 (사용자 지정
+/// 2026-11-24). 직접 입력한 ᄃᅼ ᄀᅼ 은 다르다 (2026-11-27): 유성 자음 + ㅡ 로 풀리는 모음이고 뒤에 숨을 덧붙이지 않는다.
 #[test]
 fn a_breathy_syllable_breathes_out_after_its_vowel_only_at_a_phrase_end() {
-    let syl = lyrics_to_syllables("ᄃᅼ ᄀᅼ, ᄇᅼ 가 ᄃᅼ", &EnglishG2P::new());
+    let syl = lyrics_to_syllables("ध घ, भ का ध", &EnglishG2P::new());
     let codas: Vec<String> = syl.iter().map(|s| s.coda.iter().map(|c| c.ipa.as_str()).collect()).collect();
     assert_eq!(codas, ["", "h", "", "", "h"]);
     let breathy: Vec<bool> = syl.iter().map(|s| s.onset[0].breathy == Some(true)).collect();
     assert_eq!(breathy, [true, true, true, false, true], "{:?}", syl.iter().map(|s| s.text.clone()).collect::<Vec<_>>());
+    // 직접 입력한 ᄃᅼ ᄀᅼ (스위치 꺼짐): 유성 자음 + ㅡ 로 풀리는 모음, 뒤에 숨을 덧붙이지 않는다
+    let typed = lyrics_to_syllables("ᄃᅼ ᄀᅼ, ᄇᆣ", &EnglishG2P::new());
+    let said: Vec<String> = typed.iter().map(|s| format!("{}{}{}", s.onset[0].ipa, s.nucleus.ipa, s.coda.iter().map(|c| c.ipa.as_str()).collect::<String>())).collect();
+    assert_eq!(said, ["dɐɤ", "gɐɤ", "baɤ"]);
+    assert!(typed.iter().all(|s| s.onset[0].breathy.is_none()));
 }
 
 /// 받침 ㆁ 은 프랑스어 비모음의 표지: 중성 + ㆁ 을 한 묶음으로 비모음 다섯에 잇는다 (사용자 지정 2026-11-24).
@@ -339,7 +356,7 @@ fn the_french_r_is_h_then_l_or_the_hl_coda() {
 #[test]
 fn the_i_switch_reads_the_yi_vowel_as_barred_i() {
     use chimera::phonetics::jeongeum::{MARK_I, set_marks};
-    for (bits, w, ipa) in [(0, "ᄉᆜ", "ɕiɯ"), (MARK_I, "ᄉᆜ", "sɨ"), (MARK_I, "ᄇᆜ", "pɨ"), (MARK_I, "ᅙᆜ", "ʔɨ"), (0, "ᅙᆜ", "ʔɨ"), (MARK_I, "시", "ɕi")] {
+    for (bits, w, ipa) in [(0, "ᄉᆜ", "ɕiɤ̤"), (MARK_I, "ᄉᆜ", "sɨ"), (MARK_I, "ᄇᆜ", "pɨ"), (MARK_I, "ᅙᆜ", "ʔɨ"), (0, "ᅙᆜ", "ʔɨ"), (MARK_I, "시", "ɕi")] {
         set_marks(bits);
         assert_eq!(read_pl(w).1, ipa, "{w} with switches {bits}");
     }
@@ -353,10 +370,25 @@ fn the_eu_switch_reads_sanskrit_and_hindi() {
     let ipa = |t: &str| read_pl(t).1.replace(' ', ".");
     let cases = [
         ("ᅟᆜ", "iɯ", "iɤ̤"),
-        ("ᄀᅼ", "gɐh", "gɐɤ̤"),
-        ("ᄃᆣ", "dah", "daɤ̤"),
-        ("뻐ퟛ나", "pʔɤ̞r.na", "pʔɤ̞ɽ.na"),
-        ("뻟나", "pʔʌʀ.na", "pʔʌɽɦ.na"),
+        ("이ퟛ", "ir", "iɽ"),            // 종성 ㄹㆁ 은 정음 sonorant: 앞 모음이 [i]
+        // 꺼짐: 모음이 숨 섞인 ㅡ 로 풀린다 (중립). 켜짐: 유성 유기음 + 그 모음 (인도 발음; 낱말이 구절 끝이라 뒤에도 숨)
+        ("ᄀᅼ", "gɐɤ", "gɐh"),
+        ("ᄃᆣ", "daɤ", "dah"),
+        ("ᄇᅼᆫ", "bɐɤn", "bɐn"),
+        ("ᄃᆜ", "diɤ", "di"),
+        ("ᄂᅼ", "nɐɝ", "nɐɦ"),           // 정음 sonorant 뒤: 꺼짐은 [ɝ] 로 풀리고, 켜짐은 끝에 [ɦ]
+        ("ᄏᅼ", "kɐɤ̤", "kɐɤ̤"),          // ㅋ ㅌ ㅍ ㅊ 뒤: 켜도 꺼도 같다
+        ("뻐ퟛ나", "pʔʌr.na", "pʌɽ.na"),   // 종성 ㄹㆁ 은 정음 sonorant: ㅓ = [ʌ]
+        ("뻟나", "pʔʌʀ.na", "pʌɽɦ.na"),
+        ("베ㅡ", "be̞ɤ", "be"),            // भे: 평소 [be̞ɤ̤], 켜면 유성 유기음 [bʱe]
+        ("게ㅡ", "ge̞ɤ", "ge"),
+        ("까", "kʔa", "ka"),
+        ("따", "tʔa", "ta"),
+        ("짜", "tɕʔa", "tɕa"),
+        ("차ᇹ", "tɕaʔ", "tɕa"),          // च: 초성 ㅊ + 종성 ㆆ = 기식 없는 tɕ, ㆆ 은 소리 나지 않는다
+        ("처ᇹ", "tɕɤ̞ʔ", "tɕɤ̞"),         // 모음은 받침 있는 음절의 값: 쩌 [tɕʌ] 와 갈린다
+        ("쩌", "tɕʔʌ", "tɕʌ"),
+        ("차", "tɕa", "tɕa"),
         ("ᅟᅡᇗ", "aɭ", "aɭ"),
         ("하", "ha", "ɦa"),
         ("라", "ɾa", "ɾa"),

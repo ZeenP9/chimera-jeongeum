@@ -4,7 +4,7 @@
 //! 음가로 낸다 (일본어 가나 처리기와 같은 방식).
 //!
 //! 표기 (책의 표, 유성 유기음은 사용자 지정 2026-11-23):
-//! - 무성 무기 ㄲ ᄍ ㄸ ㄸ+ᇫ ㅃ, 무성 유기 ㅋ ㅊ ㅌ ㅌ+ᇫ ㅍ, 유성 무기 ㄱ ㅈ ㄷ ㄷ+ᇫ ㅂ,
+//! - 무성 무기 ㄲ ㅊ+ᇹ ㄸ ㄸ+ᇫ ㅃ, 무성 유기 ㅋ ㅊ ㅌ ㅌ+ᇫ ㅍ, 유성 무기 ㄱ ㅈ ㄷ ㄷ+ᇫ ㅂ,
 //!   유성 유기는 ㅡ 를 뒤에 품은 결합모음: घ ᄀᅼ · झ ᄌᅼ · ढ ᄃᅼᇫ · ध ᄃᅼ · भ ᄇᅼ (i 앞 ᆜ, ā 앞 ᆣ).
 //! - 권설음은 받침 ㅿ (ट 떠ᇫ, ष 셔ᇫ), ś 셔, s 써, h ㅎ, 비음 ङ ㆁ · ञ ㄴ · ण ㄴ+ᇫ · न ㄴ · म ㅁ, y ㅇ+j, r ㄹ, l ㄹ, v ㅸ.
 //! - 모음: a ㅓ, ā ㅏ, i·ī ㅣ, u·ū ㅜ, e ㅔ, o ㅗ, ai ㆎ, au ᆠ, ṛ 리 — 책의 실제 표기(간ᄃᆜ, 써마ᄃᆜ, 빠러미ᇹ따)대로
@@ -48,7 +48,9 @@ fn cons(c: char) -> Option<Cons> {
         'ग' => k('ᄀ', false, false, "g", None, Some('ᆨ')),
         'घ' => k('ᄀ', false, true, "g", None, Some('ᆨ')),
         'ङ' => k('ᅌ', false, false, "ŋ", None, Some('ᆼ')),
-        'च' => k('ᄍ', false, false, "tɕ", Some(false), Some('ᆮ')),
+        // च: 초성 ㅊ + 종성 ㆆ (처ᇹ; 사용자 지정 2026-11-27, 그 전에는 쩌). ㆆ 은 `syllable_text` 가 붙이고, 다른
+        // 받침이 있는 음절에서는 ㅉ 으로 적는다 (쩐ᆮ)
+        'च' => k('ᄎ', false, false, "tɕ", Some(false), Some('ᆮ')),
         'छ' => k('ᄎ', false, false, "tɕ", Some(true), Some('ᆮ')),
         'ज' => k('ᄌ', false, false, "dʑ", None, Some('ᆮ')),
         'झ' => k('ᄌ', false, true, "dʑ", None, Some('ᆮ')),
@@ -105,13 +107,14 @@ fn is_independent_vowel(c: char) -> bool {
     matches!(c, '\u{0904}'..='\u{0914}')
 }
 
-/// 유성 유기음 뒤 모음: ㅡ 를 뒤에 품은 결합모음 (a ᅼ, i ᆜ, ā ᆣ), 그 밖은 그대로. u 는 ᅮ 그대로다: ᆖ 는 쓰지 않는다
-/// (사용자 지정 2026-11-27).
+/// 유성 유기음 뒤 모음: ㅡ 를 품은 결합모음 (a ᅼ, i ᆜ, ā ᆣ, u ᆕ = ㅡ+ㅜ: भु ᄇᆕ, 사용자 지정 2026-11-27), 그 밖은
+/// 그대로. e 는 한 글자로 짤 수 없어 뒤에 ㅡ 를 따로 붙인다 (भे 베ㅡ: `syllable_text`). ᆖ 는 쓰지 않는다.
 fn murmur_vowel(v: char) -> char {
     match v {
         'ᅥ' => 'ᅼ',
         'ᅵ' => 'ᆜ',
         'ᅡ' => 'ᆣ',
+        'ᅮ' => 'ᆕ',
         other => other,
     }
 }
@@ -259,6 +262,8 @@ fn render(s: Syl) -> Syllable {
     // 유성 유기음 + 2모라 모음(ū o ai au): ㅎ 를 다시 살려 뒤에 한 블록 (भूमि 부후.미, भौतिक 바후.띠꺼, घो 고호;
     // 책). ā ī i a 는 ㅡ 결합모음(ᆣ ᆜ ᅼ)에 수납, e 는 숨을 적지 않는다 (विभेद ᄫᅵ베더)
     let mut revived: Option<char> = None;
+    // 유성 유기음 + e: 베ㅡ 처럼 블록 뒤에 ㅡ 를 따로 적는다 (한 글자로 조합되지 않는다; 사용자 지정 2026-11-27)
+    let mut trailing_eu = false;
     if let Some(k) = main {
         if k.murmur {
             match (vj, long) {
@@ -272,7 +277,7 @@ fn render(s: Syl) -> Syllable {
                     vj = 'ᅡ';
                     revived = Some('ᅮ');
                 }
-                ('ᅦ', _) => {}
+                ('ᅦ', _) => trailing_eu = true,
                 _ => vj = murmur_vowel(vj),
             }
         }
@@ -305,6 +310,11 @@ fn render(s: Syl) -> Syllable {
             tails.push(t);
         }
     }
+    // च (무기 ㅊ) 는 받침 ㆆ 으로 छ (처) 와 가른다 (처ᇹ). 다른 받침이 있으면 ㆆ 을 적을 자리가 없으므로 ㅉ 으로
+    // 적는다 (चन्द्र 쩐ᆮ러; 사용자 지정 2026-11-27)
+    let unaspirated_c = main.is_some_and(|k| k.lead == 'ᄎ' && k.asp == Some(false)) && revived.is_none();
+    let ca = unaspirated_c && tails.is_empty();
+    let block = if unaspirated_c && !ca { block.replacen('ᄎ', "ᄍ", 1) } else { block };
     let mut last_block = match revived {
         Some(r) => {
             text.push_str(&compose(&block));
@@ -313,10 +323,13 @@ fn render(s: Syl) -> Syllable {
         None => block,
     };
     last_block.extend(tails);
-    if s.short_i_inside {
+    if s.short_i_inside || ca {
         last_block.push('ᇹ');
     }
     text.push_str(&compose(&last_block));
+    if trailing_eu {
+        text.push('ㅡ');
+    }
     if s.visarga {
         // ḥ: 직전 모음에 ㅎ (iḥ 히, uḥ 후, aḥ 허)
         let v = match plain_v {

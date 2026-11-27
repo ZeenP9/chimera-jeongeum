@@ -431,10 +431,10 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 if bname == "female" && vw.ipa == "ɯ" {
                     return c + 0.5 * p[8] * p[8] + 2.0 * (p[4] * p[4] + pow(js_max(0.0, 0.55 - p[5]), 2.0)) + 5.0 * pow(js_max(0.0, 0.278 - p[3]), 2.0);
                 }
-                // fork: u (and u̠, the same vowel here) stays rounded (user, 2026-11-27): protruded 0.6 at
+                // fork: u stays rounded (user, 2026-11-27; u̠ is upstream's again and its table entry is not refitted): protruded 0.6 at
                 // least, lips no wider than a close rounded vowel's and 0.27 cm apart at least
                 // (BECK_LIP_AP_ROUND); the jaw, root, larynx and tongue pulls stay lifted
-                if bname == "female" && matches!(vw.ipa, "u" | "u̠") {
+                if bname == "female" && vw.ipa == "u" {
                     return c + 0.5 * p[8] * p[8] + 2.0 * (pow(js_max(0.0, 0.6 - p[4]), 2.0) + pow(js_max(0.0, p[5] - 0.3), 2.0)) + 5.0 * pow(js_max(0.0, 0.3 - p[3]), 2.0);
                 }
                 if bname == "female" && FREE.contains(&vw.ipa) {

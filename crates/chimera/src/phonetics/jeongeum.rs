@@ -41,6 +41,7 @@ pub struct Jeongeum;
 ///     · 겹종성 ㄹㆁ ퟛ = ɽ (पड़ना 뻐ퟛ나) · ㄹㅎ ᆶ = ɽʱ (पढ़ना 뻟나). ㄹㅿ ᇗ = ɭ (ळ) 은 스위치 없이도 그렇다
 ///     · 초성 ㅎ = ɦ (ह) · 초성 ㄹ = 탄음 ɾ · 초성 ㄱ ㅈ ㄷ ㅂ = 유성 g dʒ d b
 ///     · 초성 ㅅ = ɕ · 초성 ㅆ = s · 초성 ㅅ + 종성 ㅿ = ʂ
+///     · 초성 ㄲ ㄸ ㅃ ㅉ = 기식 없는 k˭ t˭ p˭ tɕ˭ (ㆆ 없이) · 초성 ㅊ + 모음 + 종성 ㆆ = tɕ˭ + 모음 (2026-11-27)
 pub const MARK_I: u8 = 1;
 pub const MARK_EU: u8 = 2;
 thread_local! {
@@ -245,7 +246,7 @@ fn sonorant(lead: Option<char>) -> bool {
 
 /// 종성이 없거나 정음 sonorant (ㄴ ㄹ ㅁ ㅿ ㆁ, ㆁ 을 이은 ㅇ, 그리고 소리 나는 쪽이 이것들인 겹받침)인가
 fn coda_sonorant(tail: &[char]) -> bool {
-    tail.iter().all(|t| matches!(t, 'ᆫ' | 'ᇈ' | 'ᆯ' | 'ᇗ' | 'ᆷ' | 'ᆼ' | 'ᇰ' | 'ᇫ' | 'ᇢ' | 'ᇙ' | 'ᆭ' | 'ᆬ' | 'ᆲ' | 'ᆳ' | 'ᆴ' | 'ᆶ' | 'ᆱ'))
+    tail.iter().all(|t| matches!(t, 'ᆫ' | 'ᇈ' | 'ᆯ' | 'ᇗ' | 'ퟛ' | 'ᆷ' | 'ᆼ' | 'ᇰ' | 'ᇫ' | 'ᇢ' | 'ᇙ' | 'ᆭ' | 'ᆬ' | 'ᆲ' | 'ᆳ' | 'ᆴ' | 'ᆶ' | 'ᆱ'))
 }
 
 /// Vowel jamo → (glide, vowel). The rule-bound ones are resolved by the onset (`son`) and the coda
@@ -261,7 +262,8 @@ fn vowel(v: &[char], son: bool, son_coda: bool) -> Option<(&'static str, &'stati
     let o = if son_coda { "o̞" } else { "o" };
     let i = if son_coda { "i" } else { "ɪ" };
     let e = "e̞";
-    let arae = if son { "ɑ" } else { "ə" };
+    // 정음 sonorant 뒤의 ㆍ 는 [ɐ] (사용자 지정 2026-11-27; 그 전에는 [ɑ])
+    let arae = if son { "ɐ" } else { "ə" };
     Some(match v {
         ['ᅡ'] => ("", a),
         ['ᅢ'] => ("", "ɛ"),
@@ -301,6 +303,7 @@ fn vowel(v: &[char], son: bool, son_coda: bool) -> Option<(&'static str, &'stati
         ['ᆚ'] => ("", "ø"),   // ㅣ+ㅗ: [ø] (사용자 지정)
         ['ᆈ'] => ("", "œ"),   // ㆉ ㅛ+ㅣ: [œ] (사용자 지정)
         ['\u{D7C5}'] => ("", "ɑ"), // ㆍ+ㅏ: [ɑ] (사용자 지정)
+        ['\u{11A0}'] => ("", "aʊ"), // ㆍ+ㅜ: [au] (사용자 지정 2026-11-26)
         // ㆍ+ㅐ: [æ] (사용자 지정). 유니코드에 한 글자가 없어 ㆍ 와 ㅐ 를 이어 쓴다 (ퟅ+ㅣ 도 같게)
         ['ᆞ', 'ᅢ'] | ['\u{D7C5}', 'ᅵ'] => ("", "æ"),
         // ᆜ+ㅜ: [ʏ] (사용자 지정) — ᆗ(ㅢ+ㅜ) = [ʊ] 와 대칭. 한 글자가 없어 ᆜ 와 ㅜ 를 이어 쓴다 (ㅣ ㅡ ㅜ 도 같게)
@@ -413,6 +416,21 @@ fn syllable(w: &Written) -> Option<Syllable> {
 }
 
 fn syllable_marked(w: &Written) -> Option<Syllable> {
+    // 블록 + 낱글자 ㅡ (베ㅡ 배ㅡ; 데바나가리 भे 의 표기에서 나온 꼴, 사용자 지정 2026-11-27). 한국어의 [pe̞ɯ] 는 '베으' 로
+    // 적으므로 이 꼴은 가로지른 ㅡ (ᅼ ᆣ ᆜ) 와 같은 규칙으로 읽는다: `crossed`.
+    if let [v @ ('ᅦ' | 'ᅢ' | 'ᅩ'), 'ᅳ'] = w.vowel.as_slice()
+        && w.tail.is_empty()
+    {
+        let mut base = syllable_marked(&Written { text: w.text.clone(), lead: w.lead, vowel: vec![*v], tail: Vec::new() })?;
+        // ㅗㅡ = [oʊ] (사용자 지정 2026-11-27): 오ㅡ [oʊ]. 초성과 스위치에 상관없다.
+        if *v == 'ᅩ' {
+            base.nucleus = Segment { nasalized: base.nucleus.nasalized, ..Segment::new("oʊ") };
+            return Some(base);
+        }
+        // 스위치가 켜진 유성 유기음 뒤에서 ㅔ 는 [e] (데바나가리로 넣은 भे [bʱe] 와 같다)
+        let plain = if *v == 'ᅦ' { "e" } else { "ɛ" };
+        return crossed(w, base, plain, false);
+    }
     let nasal = w.tail.contains(&'ᇰ');
     let french = if nasal { nasal_vowel(&w.vowel) } else { None };
     // 받침 ㆁ 은 프랑스어 비모음 다섯 묶음에만 쓴다 (사용자 지정 2026-11-24). 그 밖의 모음 + ㆁ 은 正音에 없는
@@ -436,6 +454,13 @@ fn syllable_marked(w: &Written) -> Option<Syllable> {
     // 구절 끝에서는 모음 뒤에도 숨이 따른다 (`phrase_final_breath`).
     // ᆜ: 기본은 [iɯ] (아래), [ɨ] 는 ᅙᆜ 로 적거나 ㅣ → ɨ 스위치를 켠다.
     let eu = mark(MARK_EU);
+    // ㅡ → ḥ 스위치: 초성 ㅊ + 모음 + 종성 ㆆ (처ᇹ, 데바나가리 च 의 표기) 은 기식 없는 [tɕ˭] + 그 음절의 모음이다
+    // (사용자 지정 2026-11-27). ㆆ 은 소리 나지 않지만 받침으로는 센다: 모음은 받침 있는 음절의 값이라 (ㅓ = ɤ̞,
+    // ㅣ = ɪ), 같은 자음의 쩌 [tɕ˭ʌ] 와 모음으로 갈린다 (처ᇹ [tɕ˭ɤ̞]). 그것이 이 표기의 뜻이다.
+    if eu && w.lead == Some('ᄎ') && w.tail == ['ᇹ'] && s.onset.first().is_some_and(|f| f.ipa == "tɕ") {
+        s.onset[0] = Segment { dur: s.onset[0].dur, aspirated: Some(false), ..Segment::new("tɕ") };
+        s.coda.clear();
+    }
     if eu && let Some(first) = s.onset.first_mut() {
         // ㅡ → ḥ 스위치의 초성 (사용자 지정 2026-11-26). 다른 규칙이 이미 바꾼 초성(권설 ɖ dʐ ʂ, 목젖음 …)은 그대로다
         let v = match (w.lead, first.ipa.as_str()) {
@@ -452,47 +477,99 @@ fn syllable_marked(w: &Written) -> Option<Syllable> {
             *first = Segment { dur: first.dur, ..Segment::new(v) };
         }
     }
-    let breathy_eu = |v: &[char]| match v {
-        ['ᆜ'] => Some("iɤ̤"),
-        ['ᅼ'] => Some("ɐɤ̤"),
-        ['ᆣ'] => Some("aɤ̤"),
+    // 가로지른 ㅡ (ᅼ ᆣ ᆜ: ㅓ ㅏ ㅣ 를 ㅡ 가 가로지른다): `crossed`
+    let plain = match w.vowel.as_slice() {
+        ['ᆜ'] => Some("i"),
+        ['ᅼ'] => Some("ɐ"),
+        ['ᆣ'] => Some("a"),
         _ => None,
     };
-    if eu && !(w.vowel == ['ᆜ'] && (w.lead == Some('ᅙ') || mark(MARK_I))) && let Some(v) = breathy_eu(&w.vowel) {
-        // ㅡ → ḥ 스위치: 모음이 숨 섞인 ㅡ 로 풀린다 (ᆜ [iɤ̤] · ᅼ [ɐɤ̤] · ᆣ [aɤ̤]). 숨은 모음 끝에 있으므로
-        // 기본 읽기의 '숨 섞인 개방'(gʱ)·모음 앞 [h] 는 붙이지 않는다
-        s.nucleus = Segment { nasalized: s.nucleus.nasalized, ..Segment::new(v) };
-    } else if w.vowel == ['ᆜ'] {
-        if w.lead == Some('ᅙ') {
-            s.nucleus.ipa = "ɨ".into();
-        } else if mark(MARK_I) {
-            // ㅣ → ɨ 스위치: ᆜ = [ɨ]. 초성은 ㅡ 앞에서처럼 (ᄉᆜ = sɨ: 구개음화하지 않는다)
-            let mut hard = syllable_oral(&Written { text: w.text.clone(), lead: w.lead, vowel: vec!['ᅳ'], tail: w.tail.clone() })?;
-            hard.nucleus = Segment { nasalized: s.nucleus.nasalized, ..Segment::new("ɨ") };
-            s = hard;
-        } else {
-            // 기본 (사용자 지정 2026-11-26): 15세기 정음·중세국어의 ᆜ 는 [iɯ] 쯤이었을 것으로 보고, 한국어 발음을 적는
-            // ᆜ 를 [iɯ] 로 읽는다 — ㅣ 에서 ㅡ 로 빠르게 이어지는 한 모음. 초성은 ㅣ 앞에서처럼 (ᄉᆜ 의 ㅅ 은 ɕ).
-            // 앞서의 'j + 숨 섞인 ㅡ' 를 대체한다.
-            s.nucleus = Segment { nasalized: s.nucleus.nasalized, ..Segment::new("iɯ") };
-        }
-    } else if matches!(w.vowel.as_slice(), ['ᅼ'] | ['ᆣ']) {
-        if let Some(first) = s.onset.first_mut() {
-            let voiced = match (w.lead, first.ipa.as_str()) {
-                (Some('ᄀ'), "k" | "g") => Some("g"),
-                (Some('ᄃ'), "t" | "d") => Some("d"),
-                (Some('ᄃ'), "ɖ") => Some("ɖ"),
-                (Some('ᄇ'), "p" | "b") => Some("b"),
-                (Some('ᄌ'), "tɕ" | "dʑ") => Some("dʑ"),
-                _ => None,
-            };
-            match voiced {
-                Some(v) => *first = Segment { breathy: Some(true), dur: first.dur, ..Segment::new(v) },
-                None => s.onset.push(Segment { dur: Some(BREATH_AFTER), ..Segment::new("h") }),
+    if w.vowel == ['ᆜ'] && w.lead == Some('ᅙ') {
+        s.nucleus.ipa = "ɨ".into();
+    } else if w.vowel == ['ᆜ'] && mark(MARK_I) {
+        // ㅣ → ɨ 스위치: ᆜ = [ɨ]. 초성은 ㅡ 앞에서처럼 (ᄉᆜ = sɨ: 구개음화하지 않는다)
+        let mut hard = syllable_oral(&Written { text: w.text.clone(), lead: w.lead, vowel: vec!['ᅳ'], tail: w.tail.clone() })?;
+        hard.nucleus = Segment { nasalized: s.nucleus.nasalized, ..Segment::new("ɨ") };
+        s = hard;
+    } else if let Some(plain) = plain {
+        return crossed(w, s, plain, true);
+    }
+    Some(s)
+}
+
+/// 가로지른 ㅡ (ᅼ ᆣ ᆜ) 와 블록 + 낱글자 ㅡ (베ㅡ) 의 읽기 (사용자 지정 2026-11-27). `s` 는 ㅡ 없이 읽은 음절,
+/// `plain` 은 그 모음이다. 초성의 갈래로 정한다:
+///
+///   | 초성                           | 꺼짐 (중립)                    | ㅡ → ḥ 켜짐 (인도·산스크리트)  |
+///   |--------------------------------|--------------------------------|--------------------------------|
+///   | ㄱ ㄷ ㅂ ㅈ                    | 유성 자음, 모음 + [ɤ]          | 유성 유기음 + 모음 (ᄇᅼ [bʱɐ]) |
+///   | ㅸ                             | 모음 + [ɤ]                     | 모음 + [ɤ]                     |
+///   | ㅋ ㅌ ㅍ ㅊ ㆄ                 | 모음 + [ɤ̤]                    | 모음 + [ɤ̤]                    |
+///   | 정음 sonorant ㄴ ㄹ ㅁ ㅿ ㆁ ᄛ | 모음 + [ɝ]                     | 모음 + 끝의 [ɦ]                |
+///   | ㅅ ㅎ                          | 모음 + [ɤ̤] (ᄉᆜ [ɕiːɤ̤])        | 모음 + [h] (ᄉᆜ [ɕih], ᄒᅼ [ɦɐh]) |
+///   | 초성 없음                      | ᆜ [iɯ], ᅼ [ɐɤ], ᆣ [aɤ]        | 모음 + [ɤ̤]                    |
+///   | ㄲ ㄸ ㅃ ㅉ ㅆ                 | 모음 + [ɤ]                     | 모음 + [ɤ̤]                    |
+///
+/// 꺼짐은 중립이다: ᅼ ᆣ 는 광둥어·북경어 등의 표기에도 쓰인다. 켜짐의 아래 두 줄은 말이 없어 전과 같이 두었다.
+/// `whole` 은 한 글자 (ᅼ ᆣ ᆜ) 일 때 참. 블록 + ㅡ (세ㅡ 에ㅡ) 는 꺼짐에서 ㅅ 도 모음 + [ɤ] 이고, 표에 없는 초성은 읽지 않는다.
+fn crossed(w: &Written, mut s: Syllable, plain: &str, whole: bool) -> Option<Syllable> {
+    let on = mark(MARK_EU);
+    let set = |s: &mut Syllable, v: String| s.nucleus = Segment { nasalized: s.nucleus.nasalized, ..Segment::new(&v) };
+    let first = s.onset.first().map(|f| f.ipa.clone()).unwrap_or_default();
+    // 풀리기 전의 모음: 한 글자 (ᅼ ᆣ ᆜ) 는 받침과 상관없이 ɐ a i, 블록 + ㅡ 는 그 블록의 모음 (ㅔ e̞, ㅐ ɛ)
+    let v0 = if whole { plain.to_string() } else { s.nucleus.ipa.clone() };
+    // ㄱ ㄷ ㅂ ㅈ (권설 ㄷ+ᇫ 포함) 의 유성음
+    let voiced = match (w.lead, first.as_str()) {
+        (Some('ᄀ'), "k" | "g") => Some("g"),
+        (Some('ᄃ'), "t" | "d") => Some("d"),
+        (Some('ᄃ'), "ɖ") => Some("ɖ"),
+        (Some('ᄇ'), "p" | "b") => Some("b"),
+        (Some('ᄌ'), "tɕ" | "dʑ") => Some("dʑ"),
+        (Some('ᄌ'), "dʒ") => Some("dʒ"),
+        _ => None,
+    };
+    match w.lead {
+        Some('ᄀ' | 'ᄃ' | 'ᄇ' | 'ᄌ') if voiced.is_some() => {
+            let v = voiced?;
+            if on {
+                s.onset[0] = Segment { breathy: Some(true), dur: s.onset[0].dur, ..Segment::new(v) };
+                set(&mut s, plain.to_string());
+            } else {
+                s.onset[0] = Segment { dur: s.onset[0].dur, ..Segment::new(v) };
+                set(&mut s, format!("{v0}ɤ"));
             }
-        } else {
-            s.onset.push(Segment { dur: Some(BREATH_AFTER), ..Segment::new("ɦ") });
         }
+        // ㅸ 은 켜져도 꺼져도 모음 + [ɤ], ㆄ 과 ㅋ ㅌ ㅍ ㅊ 은 모음 + [ɤ̤]
+        Some('ᄫ') => set(&mut s, format!("{v0}ɤ")),
+        Some('ᄏ' | 'ᄐ' | 'ᄑ' | 'ᄎ' | 'ᅗ') => set(&mut s, format!("{v0}ɤ̤")),
+        Some('ᄂ' | 'ᄅ' | 'ᄆ' | 'ᅀ' | 'ᅌ' | 'ᄛ') => {
+            if on {
+                set(&mut s, plain.to_string());
+                s.coda.insert(0, Segment { dur: Some(BREATH_AFTER), ..Segment::new("ɦ") });
+            } else {
+                set(&mut s, format!("{v0}ɝ"));
+            }
+        }
+        // ㅅ ㅎ + 가로지른 ㅡ (사용자 지정 2026-11-28). 꺼짐: 모음 + [ɤ̤] (ᄉᆜ = [ɕiːɤ̤]: 긴 [i] 에 짧은 [ɤ̤]. 이중모음의
+        // 뒤쪽은 본래 짧게 (모음의 1/5) 나므로 길이를 따로 정하지 않는다). 켜짐: 모음 + [h] (ᄉᆜ = [ɕih], ᄒᅼ = [ɦɐh]).
+        // 앞서 ᄉᆜ 의 [i] 뒤 쉼을 [ʔ], [h], 숨의 압력을 내리는 쉼, 비음 [ĩ] 로 내 보았으나 모두 버렸다.
+        Some('ᄉ' | 'ᄒ') if whole => {
+            if on {
+                set(&mut s, plain.to_string());
+                s.coda.insert(0, Segment::new("h"));
+            } else {
+                set(&mut s, format!("{v0}ɤ̤"));
+            }
+        }
+        // 초성 없는 ᆜ = [iɯ] (15세기 음가)
+        None | Some('ᄋ') if !on && whole && plain == "i" => set(&mut s, "iɯ".to_string()),
+        // 초성 없음, ㅎ, ㄲ ㄸ ㅃ ㅉ ㅆ, 그리고 블록 + ㅡ 의 ㅅ (세ㅡ): 모음 + [ɤ]
+        None | Some('ᄋ' | 'ᄒ' | 'ᄁ' | 'ᄄ' | 'ᄈ' | 'ᄍ' | 'ᄊ' | 'ᄉ') if !on => set(&mut s, format!("{v0}ɤ")),
+        // 켜짐에서 블록 + ㅡ 도 한 글자와 같이 모음 + [ɤ̤] (말이 없어 표의 값에 맞췄다)
+        None | Some('ᄋ' | 'ᄒ' | 'ᄁ' | 'ᄄ' | 'ᄈ' | 'ᄍ' | 'ᄊ' | 'ᄉ') => set(&mut s, format!("{v0}ɤ̤")),
+        _ if !whole => return None,
+        _ if !on && plain == "i" => set(&mut s, "iɯ".to_string()),
+        _ => set(&mut s, format!("{v0}ɤ̤")),
     }
     Some(s)
 }
@@ -624,6 +701,8 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
     }
     // ᆕ(ㅡ+ㅜ = ʉ)는 예외: 그 자체가 모음 [ʉ]라 목젖음 규칙을 받지 않는다 (ᄀᆕ ᄏᆕ ᄒᆕ = 일본어 ぐ く ふ, 사용자 지정)
     if let Some(l @ ('ᄁ' | 'ᄀ' | 'ᄏ' | 'ᄒ')) = w.lead
+        // ㅎ + ㅢ 는 목젖 규칙을 받지 않는다 (사용자 지정 2026-11-27): 희 = [hi] (한국어 처리기와 같다; [χi] 도 [hɰi] 도 아니다)
+        && !(l == 'ᄒ' && w.vowel == ['ᅴ'])
         && let [first, rest @ ..] = w.vowel.as_slice()
         && *first != 'ᆕ'
         && let Some(base) = eu_base(*first)
@@ -687,7 +766,8 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
             }
             glide = "";
         } else if w.vowel == ['ᅴ'] {
-            glide = ""; // ㅢ after another consonant is [i] (희 → 히)
+            // ㅢ after a consonant is [i] (희 → 히, 늬 → 니): 한국어 처리기의 규칙 그대로 (초성이 있으면 [i], 없으면 [ɰi])
+            glide = "";
         }
         // 자음 + j 활음(ㅑ ㅕ ㅛ ㅠ ㅒ ㅖ) = 경구개 자음: 활음은 그 자음에 흡수된다
         //   ㆅ+j = ç, ㄲ+j = c, ㄱ+j = ɟ, ㅋ+j = cʰ, ㄴ+j = ɲ, ㄹ+j = ʎ
@@ -770,7 +850,10 @@ fn syllable_oral(w: &Written) -> Option<Syllable> {
         // 성문을 닫았다 모음으로 연다. ㄲ ㄸ 이 다른 자음의 표기로 쓰인 자리 (ㄲ+j = c, ㄲ+ㅡ결합 = q, ㄸ+ㅿ = ʈ)는
         // 그 자음 그대로다.
         // 인두 표지 음절 (ᄄᆞᇂ = tˤ) 의 ㄸ 도 그 표기의 구성요소라 그대로다.
-        if matches!((l, ipa), ('ᄁ', "k") | ('ᄄ', "t") | ('ᄈ', "p") | ('ᄍ', "tɕ")) && !(w.tail.contains(&'ᇂ') && arae_vowel(w)) {
+        // ㅡ → ḥ 스위치가 켜지면 ㄲ ㄸ ㅃ ㅉ 은 ㆆ 없이 기식 없는 [k˭ t˭ p˭ tɕ˭] 다 (사용자 지정 2026-11-27: 데바나가리
+        // क त प 를 꺼 떠 뻐 로 적는다). च 의 표기는 초성 ㅊ + 종성 ㆆ (처ᇹ): `syllable_marked`.
+        let plain = mark(MARK_EU) && matches!(l, 'ᄁ' | 'ᄄ' | 'ᄈ' | 'ᄍ');
+        if !plain && matches!((l, ipa), ('ᄁ', "k") | ('ᄄ', "t") | ('ᄈ', "p") | ('ᄍ', "tɕ")) && !(w.tail.contains(&'ᇂ') && arae_vowel(w)) {
             on.push(Segment::new("ʔ"));
         }
     }
@@ -1108,47 +1191,22 @@ pub fn pinyin_to_jeongeum(py: &str) -> Option<&'static str> {
         .copied()
 }
 
-/// 3성 ㆆ형: ㆆ가 둘째 음절 이후의 첫소리로 쓰였다 (마ᅙᅡ). 첫 음절의 ᅙᆞ·ᅙᅳ(성절 자음 ᅙᅳᄋᆞᆼ)는 아니다.
-fn hieut_inside(spelling: &str) -> bool {
-    spelling.char_indices().any(|(i, c)| i > 0 && c == 'ᅙ')
-}
-
-/// 표기에 ㆆ 이 있다 — 첫소리(ᅙ)로든 받침(ᇹ)으로든, 어느 자리에든 (사용자 지정 2026-11-27: 二 ᅌᅥᇹ, 爱 아ᅙᅵ).
-/// 단 첫머리의 ᅙᆞ(= ə)·ᅙᅳ 는 성절 자음 표기의 한 단위라 세지 않는다 (嗯 ᅙᆞᆼ).
-fn has_hieut(spelling: &str) -> bool {
-    let mut cs = spelling.chars();
-    let syllabic = cs.next() == Some('ᅙ') && matches!(cs.next(), Some('ᆞ' | 'ᅳ'));
-    spelling.chars().skip(if syllabic { 1 } else { 0 }).any(|c| matches!(c, 'ᅙ' | 'ᇹ'))
-}
-
-/// 성조를 正音 표기대로 노래의 음높이 굽이로 싣는다 (멜로디 음에서 반음 단위로):
-///   1성(경성 포함) 평평 · 2성 ㆁ = 아래에서 올라감 · 4성 = 크게 하강, 표기에 ㆆ 이 있으면 첫머리 [ʔ] (二 ᅌᅥᇹ).
-///   3성은 표기는 하나지만 소리는 자리에 따라: 구 끝(`last`)이면 온3성 214 — ㅡ첨가형은 ㅢ식 굴곡(ɨ 활음,
-///   내려갔다 오름), ㆆ형은 하강 — 이고, 구 안이면 반3성 21(내려가기만). 3성+3성 → 2성은 사전이 이미 바꿔 온다.
-/// [ʔ]는 4성이고 正音 표기에 ㆆ가 있을 때만 남는다: 그 밖에는 중국어 처리기가 초성 없는 음절에 붙이는 기본 [ʔ]를 뗀다.
-/// 儿 의 正音 표기: ᅌᅥᇫ (사용자 지정 2026-11-27; 그 전 몇 시간은 ᅌᅥᆯ)
+/// 儿 의 正音 표기: ᅌᅥᇫ (사용자 지정 2026-11-27)
 const ER: &str = "\u{114C}\u{1165}\u{11EB}";
 
-fn apply_tone(s: &mut Syllable, tone: u8, spelling: &str, last: bool) {
-    let had_glottal = s.onset.iter().any(|x| x.ipa == "ʔ");
-    s.onset.retain(|x| x.ipa != "ʔ");
+/// 성조를 노래의 음높이 굽이로 싣는다 (멜로디 음에서 반음 단위로): 1성(경성 포함) 평평 · 2성 아래에서 올라감 ·
+/// 3성 구 끝(`last`)이면 온3성 214 (내려갔다 오름), 구 안이면 반3성 21 (내려가기만) · 4성 크게 하강.
+/// 3성+3성 → 2성은 사전이 이미 바꿔 온다.
+/// 소리(자음·모음)는 손대지 않는다 (사용자 지정 2026-11-27): 한자의 소리는 중국어 처리기의 것 그대로이고 正音 은
+/// 화면 표기일 뿐이다. 표기를 바꿔도 소리는 달라지지 않는다. (그 전에는 표기에 ㆆ 이 없으면 처리기의 첫머리 [ʔ] 를
+/// 떼고, 구 끝 3성에 [ɨ] 활음을 붙였다.)
+fn apply_tone(s: &mut Syllable, tone: u8, last: bool) {
     let bend = |at, len, max, st| Bend { at, len, max, st };
     match tone {
         2 => s.pitch = vec![bend(Edge::Start, 0.75, 0.6, -4.0)],
-        3 if !last || hieut_inside(spelling) => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
-        3 => {
-            let glide = format!("ɨ{}", s.nucleus.ipa);
-            if super::planner::expand(&glide).is_some() {
-                s.nucleus.ipa = glide;
-            }
-            s.pitch = vec![bend(Edge::Middle, 0.4, 0.35, -2.0), bend(Edge::End, 0.35, 0.3, 3.0)];
-        }
-        4 => {
-            if had_glottal && has_hieut(spelling) {
-                s.onset.insert(0, Segment::new("ʔ"));
-            }
-            s.pitch = vec![bend(Edge::End, 0.85, 0.5, -8.0)];
-        }
+        3 if !last => s.pitch = vec![bend(Edge::End, 0.8, 0.5, -3.0)],
+        3 => s.pitch = vec![bend(Edge::Middle, 0.4, 0.35, -2.0), bend(Edge::End, 0.35, 0.3, 3.0)],
+        4 => s.pitch = vec![bend(Edge::End, 0.85, 0.5, -8.0)],
         _ => {}
     }
 }
@@ -1196,7 +1254,7 @@ impl FrontEnd for JeongeumHan<'_> {
                 // 제 음절로 읽는 儿 (儿子, 女儿) 도 같은 글자다; 표의 er2 와도 같다 (er2 ᅌᅥᇫ · er3 ᄋힺᅌᅥᇫ · er4 ᅌᅥᇹ; er1 · er5 는 그렇게 읽는 글자가 없어 표기를 두지 않는다)
                 s.text = ER.to_string();
             }
-            apply_tone(s, tone, spelling, i + n >= cs.len());
+            apply_tone(s, tone, i + n >= cs.len());
             // 성절 자음: 중국어 처리기는 n·ng·m 을 모두 [ən]으로 근사한다. 正音 표기대로 받침을 낸다
             // (ᅙᆞᆫ ən · ᅙᆞᆼ əŋ · ᅙᆞᇢ əʋ)
             let base = py.trim_end_matches(|c: char| c.is_ascii_digit());
@@ -1217,7 +1275,7 @@ pub fn phrase_final_breath(syls: &mut [Syllable]) {
     let n = syls.len();
     for (i, s) in syls.iter_mut().enumerate() {
         let last = s.phrase_end || i + 1 == n;
-        if last && s.text.chars().any(|c| matches!(c, 'ᅼ' | 'ᆣ')) && s.coda.is_empty() && !s.nucleus.ipa.ends_with('\u{324}') {
+        if last && s.text.chars().any(|c| matches!(c, 'ᅼ' | 'ᆣ')) && s.coda.is_empty() && matches!(s.nucleus.ipa.as_str(), "ɐ" | "a") {
             s.coda.push(Segment { dur: Some(BREATH_PHRASE_END), ..Segment::new("h") });
         }
     }
