@@ -43,7 +43,9 @@ fn consonants(segs: &[Segment], body: BodyMix, k: f64) -> Vec<Segment> {
 /// A sung vowel (or one half of a diphthong) at the note's pitch, with the sound marks of the
 /// syllable's nucleus.
 fn nucleus_part(ipa: &str, dur: f64, hz: f64, nucleus: &Segment) -> Segment {
-    Segment { ipa: ipa.to_string(), dur: Some(dur), f0: Some(hz), stress: Some(1), nasalized: nucleus.nasalized, breathy: nucleus.breathy, ..Default::default() }
+    // 끝에 ◌̤ 가 붙은 이중모음(iɤ̤)은 뒤쪽 활음만 숨 섞인 소리다
+    let breathy = if super::planner::breathy_offglide(&nucleus.ipa) { (offglide(&nucleus.ipa) == Some(ipa)).then_some(true) } else { nucleus.breathy };
+    Segment { ipa: ipa.to_string(), dur: Some(dur), f0: Some(hz), stress: Some(1), nasalized: nucleus.nasalized, breathy, ..Default::default() }
 }
 
 /// Sung consonants at their note's pitch: an onset consonant moves the pitch to the new note
@@ -555,7 +557,11 @@ fn live_nucleus_part<'a>(ipa: &'a str, dur: f64, hz: f64, syl: &LiveSyllable) ->
 /// (a rising one already holds its vowel), and the coda.
 fn push_tail<'a>(out: &mut LiveSegments<'a>, syl: &'a LiveSyllable, body: BodyMix, hz: f64) {
     if let Some(b) = offglide(syl.nucleus.as_str()) {
-        out.push(live_nucleus_part(b, 0.07, hz, syl));
+        let mut part = live_nucleus_part(b, 0.07, hz, syl);
+        if super::planner::breathy_offglide(syl.nucleus.as_str()) {
+            part.breathy = Some(true);
+        }
+        out.push(part);
     }
     push_consonants(out, &syl.coda, body, 0.7);
 }

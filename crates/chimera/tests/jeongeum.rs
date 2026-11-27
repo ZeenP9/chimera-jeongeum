@@ -169,13 +169,13 @@ fn polish_is_written_in_jeongeum_and_sounds_polish() {
     assert_eq!(read_pl("Pan się").1.split(' ').next(), Some("pan"));
 }
 
-/// ᆜ = j + 숨 섞인 ㅡ (ㅛ = j + ㅗ 처럼), [ɨ] 는 ᅙᆜ (사용자 지정 2026-11-24).
+/// ᆜ = [iɯ] (15세기 정음·중세국어의 소리로 본다; 사용자 지정 2026-11-26), [ɨ] 는 ᅙᆜ.
 #[test]
-fn typed_i_eu_is_j_then_a_breathy_eu() {
-    for (w, ipa) in [("ᄉᆜ", "ɕjɤ"), ("ᄃᆜ", "tjɤ"), ("ᄂᆜ", "njɤ"), ("ᅟᆜ", "jɤ"), ("ᄉᆜᆫ", "ɕjɤn"), ("ᄉᆜᆨ", "ɕjɯk"), ("ᅙᆜ", "ʔɨ")] {
+fn typed_i_eu_is_i_then_eu() {
+    for (w, ipa) in [("ᄉᆜ", "ɕiɯ"), ("ᄃᆜ", "tiɯ"), ("ᄂᆜ", "niɯ"), ("ᅟᆜ", "iɯ"), ("ᄉᆜᆫ", "ɕiɯn"), ("ᄉᆜᆨ", "ɕiɯk"), ("ᅙᆜ", "ʔɨ")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
         let syl = lyrics_to_syllables(w, &EnglishG2P::new());
-        assert_eq!(syl[0].nucleus.breathy, if w == "ᅙᆜ" { None } else { Some(true) }, "{w}");
+        assert_eq!(syl[0].nucleus.breathy, None, "{w}");
     }
 }
 
@@ -234,8 +234,9 @@ fn the_dental_fricatives_need_all_three_parts() {
         assert_eq!(syl[0].nucleus.ipa, v, "{w}");
         assert!(syl[0].coda.is_empty(), "{w}");
     }
+    // ɪ 는 언제나 [ɪʔ] (사용자 지정 2026-11-27).
     // 세 자리 code 에 붙은 ㅣ 는 [ɪ]; 그 ㅿ 은 받침이 아니어서 다른 모음의 받침 규칙에도 들지 않는다
-    for (w, ipa) in [("듸ᇫ", "ðɪ"), ("틔ᇫ", "θɪ"), ("틔ᇫᆼ", "θɪŋ"), ("ᄃힺᇫ", "ðʌ"), ("ᄐힺᇫᆨ", "θɤ̞k")] {
+    for (w, ipa) in [("듸ᇫ", "ðɪʔ"), ("틔ᇫ", "θɪʔ"), ("틔ᇫᆼ", "θɪʔŋ"), ("ᄃힺᇫ", "ðʌ"), ("ᄐힺᇫᆨ", "θɤ̞k")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
     let syl = lyrics_to_syllables("타ᇫ 따ᇫ", &EnglishG2P::new());
@@ -246,7 +247,7 @@ fn the_dental_fricatives_need_all_three_parts() {
 /// 듸ᇫㅅ = 영어 this [ðɪs], 듸ᇫ스 = 한국인이 외래어로 읽는 [ðɪ sɤ].
 #[test]
 fn a_lone_consonant_letter_is_a_bare_consonant() {
-    for (w, ipa) in [("듸ᇫㅅ", "ðɪs"), ("듸ᇫ스", "ðɪ sɤ"), ("틔ᇫᆼㅋ", "θɪŋk"), ("ㅅ타", "sta"), ("버스", "pʌ sɤ"), ("ㅸ", "βə"), ("ㆄ", "fə")] {
+    for (w, ipa) in [("듸ᇫㅅ", "ðɪʔs"), ("듸ᇫ스", "ðɪʔ sɤ"), ("틔ᇫᆼㅋ", "θɪʔŋk"), ("ㅅ타", "sta"), ("버스", "pʌ sɤ"), ("ㅸ", "βə"), ("ㆄ", "fə")] {
         assert_eq!(read_pl(w).1, ipa, "{w}");
     }
 }
@@ -338,9 +339,55 @@ fn the_french_r_is_h_then_l_or_the_hl_coda() {
 #[test]
 fn the_i_switch_reads_the_yi_vowel_as_barred_i() {
     use chimera::phonetics::jeongeum::{MARK_I, set_marks};
-    for (bits, w, ipa) in [(0, "ᄉᆜ", "ɕjɤ"), (MARK_I, "ᄉᆜ", "sɨ"), (MARK_I, "ᄇᆜ", "pɨ"), (MARK_I, "ᅙᆜ", "ʔɨ"), (0, "ᅙᆜ", "ʔɨ"), (MARK_I, "시", "ɕi")] {
+    for (bits, w, ipa) in [(0, "ᄉᆜ", "ɕiɯ"), (MARK_I, "ᄉᆜ", "sɨ"), (MARK_I, "ᄇᆜ", "pɨ"), (MARK_I, "ᅙᆜ", "ʔɨ"), (0, "ᅙᆜ", "ʔɨ"), (MARK_I, "시", "ɕi")] {
         set_marks(bits);
         assert_eq!(read_pl(w).1, ipa, "{w} with switches {bits}");
     }
     set_marks(0);
+}
+
+/// ㅡ → ḥ 스위치 (사용자 지정 2026-11-26): 산스크리트·힌디어를 정음으로 적었을 때의 읽기. 꺼지면 기본 그대로다.
+#[test]
+fn the_eu_switch_reads_sanskrit_and_hindi() {
+    use chimera::phonetics::jeongeum::{MARK_EU, set_marks};
+    let ipa = |t: &str| read_pl(t).1.replace(' ', ".");
+    let cases = [
+        ("ᅟᆜ", "iɯ", "iɤ̤"),
+        ("ᄀᅼ", "gɐh", "gɐɤ̤"),
+        ("ᄃᆣ", "dah", "daɤ̤"),
+        ("뻐ퟛ나", "pʔɤ̞r.na", "pʔɤ̞ɽ.na"),
+        ("뻟나", "pʔʌʀ.na", "pʔʌɽɦ.na"),
+        ("ᅟᅡᇗ", "aɭ", "aɭ"),
+        ("하", "ha", "ɦa"),
+        ("라", "ɾa", "ɾa"),
+        ("가", "ka", "ga"),
+        ("자", "tɕa", "dʒa"),
+        ("다", "ta", "da"),
+        ("바", "pa", "ba"),
+        ("사", "sa", "ɕa"),
+        ("싸", "sa", "sa"),
+        ("씨", "ɕi", "si"),
+        ("사ᇫ", "ʂa", "ʂa"),
+    ];
+    for (text, off, on) in cases {
+        set_marks(0);
+        assert_eq!(ipa(text), off, "{text} (off)");
+        set_marks(MARK_EU);
+        assert_eq!(ipa(text), on, "{text} (on)");
+    }
+    set_marks(0);
+}
+
+/// ᅌᅥ = [əɝ] (받침이 붙어도), ᅌᅥᇫ = [ɻ] (사용자 지정 2026-11-27).
+#[test]
+fn ng_eo_is_the_mandarin_er_and_with_bansiot_its_consonant() {
+    for (text, ipa) in [
+        ("\u{114C}\u{1165}", "əɝ"),
+        ("\u{114C}\u{1165}\u{11EB}", "əɝ"),            // 홀로: 제 음절
+        ("우안\u{114C}\u{1165}\u{11EB}", "u anɻ"),       // 단어 끝: 앞 음절의 받침 (儿화)
+        ("\u{114C}\u{1165}\u{11EB}아", "ɻa"),           // 모음 앞: 첫소리
+        ("\u{114C}\u{1165}\u{11AB}", "əɝn"),           // 받침이 붙어도 [əɝ]
+    ] {
+        assert_eq!(read_pl(text).1, ipa, "{text}");
+    }
 }

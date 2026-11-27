@@ -9,7 +9,7 @@ type Key = "i" | "arae" | "eu" | "hieut";
 const SLICES: { key: Key; name: string; d: string }[] = [
   { key: "i", name: "ㅣ as ɨ (Polish, Russian)", d: `M0 0L${-D} ${-D}A${R} ${R} 0 0 0 ${-D} ${D}Z` },
   { key: "arae", name: "ㆍ (no function yet)", d: `M0 0L${-D} ${-D}A${R} ${R} 0 0 1 ${D} ${-D}Z` },
-  { key: "eu", name: "ㅡ ḥ (no function yet)", d: `M0 0L${D} ${-D}A${R} ${R} 0 0 1 ${D} ${D}Z` },
+  { key: "eu", name: "ㅡ → ḥ : Sanskrit · Hindi reading", d: `M0 0L${D} ${-D}A${R} ${R} 0 0 1 ${D} ${D}Z` },
   { key: "hieut", name: "ㆆ ʕ (no function yet)", d: `M0 0L${D} ${D}A${R} ${R} 0 0 1 ${-D} ${D}Z` },
 ];
 
@@ -40,8 +40,9 @@ function Sign(props: { ch: string; x: number; y: number; scale?: number; turn?: 
 
 /**
  * 正音: 네 조각 스위치 (사용자 지정 2026-11-26). X 로 가른 원의 네 조각이 저마다 켜지고 꺼진다:
- *   왼쪽 ɨ ㅣ : ᆜ 를 [ɨ] 로 (폴란드어·러시아어). 지금 기능이 있는 것은 이 조각뿐이다.
- *   위 ⊙ (○ 안의 ㆍ) · 오른쪽 ㅡ ḥ · 아래 ㆆ ʕ : 자리만 잡아 두었다 (켜지고 꺼지기만 한다; 기능은 미정)
+ *   왼쪽 ɨ ㅣ : ᆜ 를 [ɨ] 로 (폴란드어·러시아어).
+ *   오른쪽 ㅡ ḥ : 산스크리트·힌디어 읽기 (jeongeum.rs `MARK_EU`).
+ *   위 ⊙ (○ 안의 ㆍ) · 아래 ㆆ ʕ : 자리만 잡아 두었다 (켜지고 꺼지기만 한다; 기능은 미정)
  * 정음 글자 ㅣ ㅡ ㆆ (호박색)와 ㆍ (빨강)은 늘 보이고, IPA 쪽 ɨ ○ ḥ ʕ 는 켜면 희게 밝아지고 끄면 어두워진다.
  * 꺼져 있을 때는 정음 글자만 십자로 가지런히 보이고, 켜면 그 바깥의 IPA 기호에 불이 들어온다 (ʕ 만 시계 방향으로
  * 90° 눕힌다). 글자는 글꼴이 아니라 가늘고 고른 획으로 직접 그린다: 1970년대 튜너 유리판의 불 들어온 글씨처럼.

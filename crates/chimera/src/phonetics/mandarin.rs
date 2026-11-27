@@ -395,7 +395,8 @@ pub fn pinyin_syllable(py: &str, text: &str) -> Option<Syllable> {
 }
 
 /// 儿 after these is always erhua (哪儿 nǎr, 这儿, 那儿), whatever the lexicon says.
-const ERHUA_AFTER: &str = "哪这那";
+/// fork: 空儿 kòngr too (user, 2026-11-27; the data reads it kong4 er2, two syllables).
+const ERHUA_AFTER: &str = "哪这那空";
 /// 儿 after these is its own syllable (女儿 nǚ'ér, 婴儿, 孤儿, 托儿所): words for people.
 const ER_SYLLABLE_AFTER: &str = "女婴孤幼男健宠胎孙侄托";
 

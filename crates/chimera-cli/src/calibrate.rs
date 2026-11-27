@@ -132,6 +132,8 @@ const LIP_AP_RAMS_HORN: f64 = 0.389;
 /// 0.45 cm (user, 2026-11-25), between ɤ's and ʌ's. On the unmeasured vowels' floor it had the
 /// lips of ə (0.80 x 2.6 cm)
 const LIP_AP_RAMS_HORN_LOWERED: f64 = 0.5;
+/// fork: the female vowels fitted with every pull lifted (user, 2026-11-27): see the cost
+const FREE: &[&str] = &["o"];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("i", 4.01, 7.96),
     ("e", 3.71, 7.71),
@@ -141,7 +143,7 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("u", 1.62, 7.03),
     ("u̠", 1.62, 7.03),
     ("y", 4.31, 8.05),
-    ("ø", 3.71, 7.61),
+    // not ø (user, 2026-11-27): freed for its new target 410/2180
     ("œ", 3.11, 6.45),
     // not ʌ (user, 2026-11-25): her take puts the tongue lower than any other vowel's (5.28, the
     // floor is 4.88). Held there it fitted 626/1074 for 595/1055 and resonances swept 1-5 kHz on
@@ -149,12 +151,9 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     // tongue at (1.13, 6.60), and the sweep from 4.5 kHz is gone
     ("ɤ", 2.02, 6.84),
     ("ʉ", 3.71, 7.88),
-    // ɪ stays held (user, 2026-11-25), short of its target (406 Hz for 385): free, it reached
-    // 376/2312 with the tongue 0.46 cm further back and 0.12 higher, near enough the velum that /ŋ/
-    // after it closed early and nasal_spans failed (female median -7.65 ms, limit 7); held midway,
-    // still -7.40. Raising its F1 target moved only the root. e moved instead, down and forward
-    // (430/2400), so that ɪ sits above it and further back.
-    ("ɪ", 3.41, 7.42),
+    // not ɪ (user, 2026-11-27): held, it stopped at 406 Hz for 385. Free, /ŋ/ after it closes a little
+    // early and nasal_spans fails by under a millisecond (female median -7.65 ms, limit 7), which
+    // the user accepts
     ("ʊ", 2.72, 7.22),
     ("e̞", 3.66, 7.08),
     ("ø̞", 3.41, 7.03),
@@ -421,6 +420,28 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 // lip height, a root, a larynx or a tongue place, only its formants and its rounding
                 // (lips no wider than they were, 2.5 cm, and protruded). With the pulls it stopped
                 // at 689/972 for 740/940; without them it reaches 756/1019 for 780/1000.
+                // fork: ɯ u u̠ o are fitted to their formants alone (user, 2026-11-27): the lip floors
+                // (LIP_FLOORS, BECK_LIP_AP_ROUND), the lip shape pulls, the jaw, root and larynx pulls and
+                // the tongue's place (BECK_TONGUE) are all lifted. With them ɯ stopped at 376/1403 for
+                // 355/1310, u at 336/989 for 300/920, o at 480/1080 for 450/1010. Only the body's own
+                // limits (LO, HI) and the least open area (above) remain.
+                // fork: ɯ stays unrounded (user, 2026-11-27): no protrusion, lips no narrower than the
+                // neutral range and at least 0.25 cm apart (LIP_FLOORS); the jaw, root, larynx and tongue
+                // pulls stay lifted. Fitted to its formants alone it had rounded (protrusion 1.34).
+                if bname == "female" && vw.ipa == "ɯ" {
+                    return c + 0.5 * p[8] * p[8] + 2.0 * (p[4] * p[4] + pow(js_max(0.0, 0.55 - p[5]), 2.0)) + 5.0 * pow(js_max(0.0, 0.278 - p[3]), 2.0);
+                }
+                // fork: u (and u̠, the same vowel here) stays rounded (user, 2026-11-27): protruded 0.6 at
+                // least, lips no wider than a close rounded vowel's and 0.27 cm apart at least
+                // (BECK_LIP_AP_ROUND); the jaw, root, larynx and tongue pulls stay lifted
+                if bname == "female" && matches!(vw.ipa, "u" | "u̠") {
+                    return c + 0.5 * p[8] * p[8] + 2.0 * (pow(js_max(0.0, 0.6 - p[4]), 2.0) + pow(js_max(0.0, p[5] - 0.3), 2.0)) + 5.0 * pow(js_max(0.0, 0.3 - p[3]), 2.0);
+                }
+                if bname == "female" && FREE.contains(&vw.ipa) {
+                    // the tongue tip stays uncurled (upstream's pull, not one of the user's): without it
+                    // the fit curled the tip to reach them (u 0.92, o 0.51, ɯ 0.44), an r-coloured posture
+                    return c + 0.5 * p[8] * p[8];
+                }
                 let all_out = bname == "female" && vw.ipa == "ɒ";
                 if all_out {
                     return c + 5.0 * pow(js_max(0.0, p[5] - 0.51), 2.0) + 2.0 * pow(js_max(0.0, 0.33 - p[4]), 2.0);

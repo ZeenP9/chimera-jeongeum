@@ -369,8 +369,8 @@ export const useStore = create<State>((set, get) => ({
   toggleMark: (k) => {
     set((s) => ({ marks: { ...s.marks, [k]: !s.marks[k] } }));
     const m = get().marks;
-    // only ㅣ → ɨ does anything yet: the other three slices keep their place and light, no more
-    setJeongeumMarks(m.i ? 1 : 0);
+    // ㅣ → ɨ (1) and ㅡ → ḥ (2) reach the engine; the other two slices keep their place and light, no more
+    setJeongeumMarks((m.i ? 1 : 0) | (m.eu ? 2 : 0));
   },
   setRoomShape: (shape) => {
     set(shape);

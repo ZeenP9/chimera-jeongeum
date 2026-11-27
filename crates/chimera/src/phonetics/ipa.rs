@@ -11,6 +11,8 @@ const MULTI: [&str; 14] = ["tʃ", "dʒ", "ts", "dz", "pf", "tɕ", "dʑ", "tʂ", 
 const ALIASES: [(&str, &str); 9] = [("t͡ʃ", "tʃ"), ("d͡ʒ", "dʒ"), ("t͡s", "ts"), ("d͡z", "dz"), ("ɡ", "g"), ("ʧ", "tʃ"), ("ʤ", "dʒ"), ("r̥", "r"), ("ɐ̯", "ɐ")];
 
 /// combining tilde and combining diaeresis below: the vowel before them is nasalized, breathy
+/// combining down tack below: a lowered vowel (e̞ o̞ ɤ̞), its own vowel where one is calibrated
+const LOWERED: char = '\u{31E}';
 const NASALIZED: char = '\u{303}';
 const BREATHY: char = '\u{324}';
 /// combining inverted breve below (non-syllabic, `aɪ̯`) and combining vertical line below (syllabic,
@@ -266,9 +268,24 @@ fn tokenize(input: &str, gaps: &mut Gaps) -> Vec<Segment> {
             continue;
         }
         let is_v = is_vowel_token(&tok);
+        // 正音: a vowel written with the lowering mark that has its own calibrated vowel (ɤ̞ e̞ o̞ ø̞ ɔ̞) is
+        // that vowel, not the bare letter with a mark to ignore. Only that mark: the retracted u̠ ʊ̠ stay
+        // the Mandarin front end's own, as before (typed, the mark is dropped and u is the English u)
+        let mut own: Vec<char> = Vec::new();
+        if is_v {
+            for &c in &s[marks_from..i] {
+                if c == LOWERED {
+                    let marked = format!("{tok}{c}");
+                    if super::planner::vowel_table().values().any(|vowels| vowels.contains_key(&marked)) {
+                        tok = marked;
+                        own.push(c);
+                    }
+                }
+            }
+        }
         // what is left unread: any mark but a tilde or diaeresis below on a vowel, and the
         // syllabic and non-syllabic marks on any letter (never reported)
-        let unread: String = s[marks_from..i].iter().copied().filter(|c| !(is_v && (*c == NASALIZED || *c == BREATHY)) && *c != NONSYLLABIC && *c != SYLLABIC).collect();
+        let unread: String = s[marks_from..i].iter().copied().filter(|c| !(is_v && (*c == NASALIZED || *c == BREATHY)) && *c != NONSYLLABIC && *c != SYLLABIC && !own.contains(c)).collect();
         if !unread.is_empty() {
             add(&mut gaps.marked, format!("{tok}{unread}"));
         }

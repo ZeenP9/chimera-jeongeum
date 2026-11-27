@@ -103,6 +103,13 @@ pub fn expand(ipa: &str) -> Option<&'static [&'static str]> {
         "ɨʊ̠" => &["ɨ", "ʊ̠"],
         "ɨəɝ" => &["ɨ", "ə", "ɝ"],
         "ɨaɝ" => &["ɨ", "a", "ɝ"],
+        // 正音 ᆜ (ㅣ+ㅡ): ㅣ 에서 ㅡ 로 (사용자 지정 2026-11-26)
+        "iɯ" => &["i", "ɯ"],
+        // 正音 ㅡ → ḥ 스위치 (사용자 지정 2026-11-26): 모음이 숨 섞인 ㅡ 로 풀린다. 끝의 ◌̤ 는 뒤쪽 활음만 숨 섞임
+        // (`breathy_offglide`)
+        "iɤ̤" => &["i", "ɤ"],
+        "ɐɤ̤" => &["ɐ", "ɤ"],
+        "aɤ̤" => &["a", "ɤ"],
         "ia" => &["i", "a"],
         "iɛ" => &["i", "ɛ"],
         "iɑ" => &["i", "ɑ"],
@@ -158,6 +165,11 @@ pub fn held_vowel(ipa: &str) -> &str {
         Some(p) if p.len() >= 2 => p[usize::from(is_rising(ipa))],
         _ => ipa,
     }
+}
+
+/// 이중모음 표기 끝의 ◌̤: 뒤쪽 활음만 숨 섞인 소리다 (iɤ̤ = i 다음에 숨 섞인 ɤ).
+pub fn breathy_offglide(ipa: &str) -> bool {
+    ipa.ends_with('\u{324}') && expand(ipa).is_some()
 }
 
 /// What a held note glides off to at its end: a falling diphthong's (or a triphthong's) last part.
@@ -448,9 +460,11 @@ pub fn plan_timed<'a>(input: impl Iterator<Item = TimedSegment<'a>>, o: &PlanOpt
                 (3, _) => &[0.25, 0.45, 0.3],
                 _ => &[1.0],
             };
+            let tail_breath = breathy_offglide(s.ipa);
             for (i, p) in parts.iter().enumerate() {
                 let dur = base * shares.get(i).copied().unwrap_or(1.0);
-                segs.push(Seg { ipa: p, dur, stress: s.stress, f0: s.f0, def: None, vowel: None, glide_from: i > 0, aspirated: None, vot: None, nasalized: s.nasalized, palatalized: None, breathy: s.breathy, glide: None });
+                let breathy = if tail_breath { (i > 0).then_some(true) } else { s.breathy };
+                segs.push(Seg { ipa: p, dur, stress: s.stress, f0: s.f0, def: None, vowel: None, glide_from: i > 0, aspirated: None, vot: None, nasalized: s.nasalized, palatalized: None, breathy, glide: None });
             }
         } else {
             segs.push(Seg { ipa: s.ipa, dur: s.dur, stress: s.stress, f0: s.f0, def: None, vowel: None, glide_from: false, aspirated: s.aspirated, vot: s.vot, nasalized: s.nasalized, palatalized: s.palatalized, breathy: s.breathy, glide: s.glide });
@@ -520,6 +534,10 @@ pub fn plan_timed<'a>(input: impl Iterator<Item = TimedSegment<'a>>, o: &PlanOpt
                 stress: if s.vowel.is_some() { Some(s.stress.unwrap_or(0)) } else { None },
                 kind: if s.vowel.is_some() { "vowel".to_string() } else { s.def.map_or("?", |d| d.manner.as_str()).to_string() },
             });
+        }
+        if s.vowel.is_some() && s.glide_from && s.breathy == Some(true) && i > 0 && segs[i - 1].breathy != Some(true) {
+            // 숨 섞인 활음 (iɤ̤): 앞 모음은 보통 소리, 활음에서만 성대가 벌어진다
+            gestures.push(Gesture::new(t0, t1, 0.03, 0.03, 5.0, one(ControlKey::ABDUCTION, BREATHY_ABDUCTION)).label("breathy"));
         }
         if s.vowel.is_some() && !s.glide_from {
             // what a vowel's marks hold for the whole vowel, through a diphthong's glide
