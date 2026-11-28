@@ -111,7 +111,7 @@ const LIP_FLOORS: &[(&str, f64, f64)] = &[("y", 0.5, 0.172), ("ɯ", 0.278, 0.0),
 const OE_LOWERED_WIDTH: f64 = 0.2222;
 /// and protruded 0.3 (user, 2026-11-26); its lip height is free
 const OE_LOWERED_PROT: f64 = 0.3;
-const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("o", 0.445), ("o̞", 0.87), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
+const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
 /// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
 const W_BECK_LIP: f64 = 0.15;
 /// the share of her opening the model takes (user, 2026-11-25): she lay down and held each cardinal
@@ -133,7 +133,8 @@ const LIP_AP_RAMS_HORN: f64 = 0.389;
 /// lips of ə (0.80 x 2.6 cm)
 const LIP_AP_RAMS_HORN_LOWERED: f64 = 0.5;
 /// fork: the female vowels fitted with every pull lifted (user, 2026-11-27): see the cost
-const FREE: &[&str] = &["o"];
+/// (o left it for FREE_LEAST on 2026-11-28; none is here now)
+const FREE: &[&str] = &[];
 /// fork: vowels whose tongue body is held at a place the user chose, with their lips' width and a
 /// ceiling on the root (user, 2026-11-28): (vowel, tongue body (x, y), lipWidth, most root).
 /// The aim was to open the narrowest point of the tract, which the free fits had squeezed below
@@ -145,7 +146,8 @@ const FREE: &[&str] = &["o"];
 /// ʊ was held here at (1.343, 4.98) until 2026-11-28 (444/1038 for 420/1040, the pharynx 0.31 cm²
 /// with the tongue at the bottom of the mouth); it is in FREE_LEAST since.
 /// lipWidth = (cm / 0.9 - 1.1) / 3.3
-const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3)];
+/// (o was held at (1.4, 5.5) until 2026-11-28, ʊ at (1.343, 4.98); both are in FREE_LEAST since)
+const HELD: &[(&str, (f64, f64), f64, f64)] = &[];
 /// fork: vowels whose tongue body is held at a place the user chose, every other pull and limit of
 /// theirs kept (user, 2026-11-28): (vowel, tongue body (x, y), most |root| or None).
 /// y: held at (4.04, 7.7), 0.14 below where it fitted, with its F1 at 300 it fits 310/2338/2846 and
@@ -187,7 +189,12 @@ struct HeldFree {
 /// just under u's (it was held at (1.343, 4.98), the bottom of the mouth): lips 0.20 x 1.36 cm
 /// protruded 1.01 (0.22 cm², the narrowest), dorsum 0.31, pharynx 2.57, jaw 0.86, root 0.36,
 /// larynx -0.02.
-const FREE_LEAST: &[(&str, f64)] = &[("ʊ", 0.20)];
+/// o: for 480/1010 with 0.32 cm², the root within ±0.4 and the lips protruded 0.6 at least (rounded),
+/// it fits 490/1046/2645 and the tongue goes by itself to (1.81, 7.11), upstream's o (1.83, 7.11);
+/// it was held at (1.4, 5.5) (482/1014): lips 0.41 x 0.99 cm protruded 1.4 and the dorsum both
+/// 0.32 cm², pharynx 1.26 (0.43 before), jaw 0.05, root 0.40, larynx 0.43.
+/// (vowel, least cm², least protrusion, root range)
+const FREE_LEAST: &[(&str, f64, f64, (f64, f64))] = &[("ʊ", 0.20, 0.0, (-0.9, 0.9)), ("o", 0.32, 0.6, (-0.4, 0.4))];
 const HELD_FREE: &[HeldFree] = &[
     HeldFree { ipa: "ɨ", tongue: (2.73, 7.66), least: 0.20, lips: false, width: (0.0, 1.0), root: (-0.9, 0.9) },
     HeldFree { ipa: "ʉ", tongue: (2.6, 7.52), least: 0.28, lips: false, width: (0.5758, 0.6599), root: (-0.7, 0.7) },
@@ -200,7 +207,6 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("e", 3.71, 7.71),
     ("ɛ", 3.61, 6.45),
     ("a", 2.62, 5.57),
-    ("o", 1.92, 6.54),
     ("u", 1.62, 7.03),
     ("u̠", 1.62, 7.03),
     ("y", 4.31, 8.05),
@@ -453,6 +459,9 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     x0[6] = x0[6].clamp(-r + 0.05, r - 0.05);
                 }
             }
+            if let Some(&(_, _, _, (r0, r1))) = FREE_LEAST.iter().find(|f| bname == "female" && f.0 == vw.ipa) {
+                x0[6] = x0[6].clamp(r0 + 0.05, r1 - 0.05);
+            }
             if let Some(h) = held_free {
                 (x0[0], x0[1]) = h.tongue;
                 if h.width.0 > 0.0 {
@@ -527,8 +536,10 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     let narrowest = air.ph_min.iter().chain(air.or_min[..if h.lips { n_or } else { n_or - 3 }].iter()).cloned().filter(|x| *x > 0.0).fold(f64::INFINITY, js_min);
                     return c + 50.0 * pow(js_max(0.0, (least - narrowest) / least), 2.0) + 0.5 * p[8] * p[8];
                 }
-                if let Some(&(_, least)) = FREE_LEAST.iter().find(|(v, _)| bname == "female" && *v == vw.ipa) {
+                if let Some(&(_, least, prot, (r0, r1))) = FREE_LEAST.iter().find(|f| bname == "female" && f.0 == vw.ipa) {
                     let narrowest = air.ph_min.iter().chain(air.or_min.iter()).cloned().filter(|x| *x > 0.0).fold(f64::INFINITY, js_min);
+                    c += 50.0 * (pow(js_max(0.0, p[6] - r1), 2.0) + pow(js_max(0.0, r0 - p[6]), 2.0));
+                    c += 2.0 * pow(js_max(0.0, prot - p[4]), 2.0);
                     return c + 50.0 * pow(js_max(0.0, (least - narrowest) / least), 2.0) + 0.5 * p[8] * p[8];
                 }
                 // fork: ɒ uses everything the body has (user, 2026-11-26): no pull toward a jaw, a
