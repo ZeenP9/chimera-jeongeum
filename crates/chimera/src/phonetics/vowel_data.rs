@@ -100,10 +100,10 @@ pub static VOWELS: &[VowelRef] = &[
     // 5 % on every body (F3, weighted least in the fit, -14 to -19 % for the adults).
     vref("ʊ̠", "Mandarin ong (back ʊ)", [441.0, 730.0, 2881.0], Some([533.0, 945.0, 3314.0]), None, true, 0.2, 1.0),
     // fork (正音): symbols upstream lacked, from J. Beck's cardinal vowels (see the module note)
-    vref("ʉ", "close central rounded, J. Beck", [342.0, 1462.0, 1839.0], Some([400.0, 1745.0, 2135.0]), None, true, 0.0, 0.5),
+    vref("ʉ", "385/1659 set by the user 2026-11-28 (F2 125 Hz lower; tongue held at (2.6, 7.55), lips free within 3.2 cm, calibrate.rs HELD_FREE; it sounds 405/1638); close central rounded, J. Beck 400/1745", [342.0, 1462.0, 1839.0], Some([385.0, 1659.0, 2135.0]), None, true, 0.0, 0.5),
     vref("ʏ", "F1 F2 set by the user 2026-11-25 (was the y–ø midpoint computed from J. Beck, 315/2275)", [360.0, 1633.0, 2217.0], Some([350.0, 2150.0, 2730.0]), None, true, 0.15, 0.1),
     vref("ɘ", "ɨ–ə midpoint (computed; the central four stand around ə, user 2026-11-24), of their fitted formants since 2026-11-26 (recomputed 2026-11-28 for ɨ 359/1870, ə 525/1603; 439/1801 before, for ɨ 353/1999)", [468.0, 1670.0, 2570.0], Some([442.0, 1737.0, 2520.0]), None, false, 0.33, 0.5),
-    vref("ɵ", "ʉ–ə midpoint (computed), of their fitted formants since 2026-11-26 (ʉ 385/1784, ə 525/1603)", [444.0, 1230.0, 2355.0], Some([455.0, 1693.5, 2415.0]), None, true, 0.33, 0.5),
+    vref("ɵ", "ʉ–ə midpoint (computed), of their fitted formants since 2026-11-26 (recomputed 2026-11-28 for ʉ 405/1638, ə 525/1603; 455/1693.5 before, for ʉ 385/1784)", [444.0, 1230.0, 2355.0], Some([465.0, 1620.5, 2415.0]), None, true, 0.33, 0.5),
     vref("ɜ", "ə–ɐ midpoint (computed), of their fitted formants since 2026-11-26 (ə 525/1603, ɐ 689/1581)", [602.0, 1500.0, 2578.0], Some([607.0, 1592.0, 2850.0]), None, false, 0.66, 0.5),
     vref("ɞ", "a quarter of the way from ə to the ɶ–ɒ midpoint, as ɜ is to ä (computed), of their fitted formants since 2026-11-26 (ə 525/1603, ɶ 791/1476, ɒ 739/1029)", [586.0, 1224.0, 2444.0], Some([585.0, 1515.0, 2740.0]), None, true, 0.66, 0.5),
     vref("ɶ", "cardinal 12: F1 F2 set by the user 2026-11-26 to where ɐ̞ sounds (791/1476), told from it by its lips (calibrate.rs, the ɶ branch of the cost); was 780/1450", [585.0, 1288.0, 2404.0], Some([791.0, 1476.0, 2755.0]), None, true, 1.0, 0.05),
