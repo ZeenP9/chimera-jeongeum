@@ -158,6 +158,11 @@ const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3), 
 /// tract kept 0.30 cm² open; it fits 405/1638 for 385/1659 (385/1784 before, rounded, the lips
 /// 0.32 cm² apart): tongue (2.63, 7.51), dorsum 0.29, lips 0.38 x 2.92 cm unprotruded, jaw 0.15,
 /// root 0.84, larynx -1.30. The F1 is as low as it comes with the dorsum kept that open.
+/// fork: vowels whose tongue body alone is held at a place the user chose, every other pull and
+/// limit of theirs kept (user, 2026-11-28): (vowel, tongue body (x, y)).
+/// y: held at (4.04, 7.7), 0.14 below where it fitted, with its F1 at 300 it fits 310/2338/2846 and
+/// stands 0.34 cm² off the palate (0.17 at 290/2337, where the frication noise is at its full).
+const TONGUE_HELD: &[(&str, (f64, f64))] = &[("y", (4.04, 7.7))];
 const HELD_FREE: &[(&str, (f64, f64), f64, Option<f64>, Option<f64>)] =
     &[("ɨ", (2.73, 7.66), 0.20, None, None), ("ʉ", (2.6, 7.55), 0.30, Some(0.7441), Some(0.86))];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
@@ -414,6 +419,10 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 x0[6] = js_min(x0[6], hr - 0.05);
             }
             let held_free = if bname == "female" { HELD_FREE.iter().find(|h| h.0 == vw.ipa).copied() } else { None };
+            let tongue_held = if bname == "female" { TONGUE_HELD.iter().find(|h| h.0 == vw.ipa).map(|h| h.1) } else { None };
+            if let Some((hx, hy)) = tongue_held {
+                (x0[0], x0[1]) = (hx, hy);
+            }
             if let Some((_, (hx, hy), _, wmax, rmax)) = held_free {
                 (x0[0], x0[1]) = (hx, hy);
                 if let Some(w) = wmax {
@@ -464,6 +473,9 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0))
                         + 50.0 * pow(p[5] - hw, 2.0)
                         + 50.0 * pow(js_max(0.0, p[6] - hr), 2.0);
+                }
+                if let Some((hx, hy)) = tongue_held {
+                    c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0));
                 }
                 if let Some((_, (hx, hy), least, wmax, rmax)) = held_free {
                     c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0));
