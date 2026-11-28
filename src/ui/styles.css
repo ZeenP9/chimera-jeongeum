@@ -1661,6 +1661,9 @@ button.primary.large {
 
 /* 正音: the Mood page's four-slice switch, in the white slot */
 .enc-extra { display: grid; min-width: 0; }
+/* quick clicks on the slices are double and triple clicks to the browser: without this they select the blank
+   text under the switch and paint a small selection box there (seen as a blue box under the French flag) */
+.jm-switch { user-select: none; -webkit-user-select: none; }
 .jm-dial { width: min(76px, 100%); aspect-ratio: 1; }
 .jm-dial svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .jm-ring { fill: none; stroke: var(--slot); stroke-width: 1.1; opacity: 0.55; pointer-events: none; filter: drop-shadow(0 0 2px var(--slot)); }
