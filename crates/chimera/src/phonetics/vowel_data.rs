@@ -56,7 +56,7 @@ const fn vref(ipa: &'static str, example: &'static str, male: [f64; 3], female: 
 
 #[rustfmt::skip]
 pub static VOWELS: &[VowelRef] = &[
-    vref("i", "cardinal 1: 300/2500 set by the user 2026-11-26 (J. Beck 235/2555, fitted 270/2497)", [342.0, 2322.0, 3000.0], Some([300.0, 2500.0, 3670.0]), Some([452.0, 3081.0, 3702.0]), false, 0.0, 0.0),
+    vref("i", "325/2500 set by the user 2026-11-28, tongue held 0.4 lower than J. Beck's (calibrate.rs, BECK_TONGUE); cardinal 1: 300/2500 set by the user 2026-11-26 (J. Beck 235/2555, fitted 270/2497)", [342.0, 2322.0, 3000.0], Some([325.0, 2500.0, 3670.0]), Some([452.0, 3081.0, 3702.0]), false, 0.0, 0.0),
     vref("ɪ", "near-close front: F1 F2 set by the user 2026-11-25 (J. Beck's MRI take gave 425/2355, below e's 405; the tongue is held at that take's, so it sounds about 406/2364), F3 Beck", [427.0, 2034.0, 2684.0], Some([385.0, 2300.0, 2915.0]), Some([511.0, 2552.0, 3403.0]), false, 0.15, 0.1),
     vref("e", "cardinal 2: F1 F2 set by the user 2026-11-25 (J. Beck measured 405 / 2445), F3 Beck", [476.0, 2089.0, 2691.0], Some([430.0, 2400.0, 3425.0]), Some([564.0, 2656.0, 3323.0]), false, 0.33, 0.0),
     vref("ɛ", "cardinal 3, J. Beck", [580.0, 1799.0, 2605.0], Some([620.0, 2075.0, 2955.0]), Some([749.0, 2267.0, 3310.0]), false, 0.66, 0.0),

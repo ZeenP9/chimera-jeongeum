@@ -161,7 +161,9 @@ const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3), 
 const HELD_FREE: &[(&str, (f64, f64), f64, Option<f64>, Option<f64>)] =
     &[("ɨ", (2.73, 7.66), 0.20, None, None), ("ʉ", (2.6, 7.55), 0.30, Some(0.7441), Some(0.86))];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
-    ("i", 4.01, 7.96),
+    // i: 0.4 lower than her take (7.96) since 2026-11-28 (user): with its F1 at 325 the tongue
+    // stands 0.31 cm² off the hard palate (300 from her posture: 0.19, where the noise is at full)
+    ("i", 4.01, 7.56),
     ("e", 3.71, 7.71),
     ("ɛ", 3.61, 6.45),
     ("a", 2.62, 5.57),
