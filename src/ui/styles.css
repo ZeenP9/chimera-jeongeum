@@ -1677,11 +1677,11 @@ button.primary.large {
 /* the legend under the switch, where the knobs beside it show their numbers */
 .jm-legend { display: grid; place-items: center; height: 30px; line-height: 1; white-space: nowrap; }
 .jm-legend-text { font-size: 15px; font-family: "Jeongeum Hangul", system-ui, "Segoe UI", "Noto Sans", sans-serif; }
-.jm-legend-word { font-size: 14px; letter-spacing: 0.1em; }
+.jm-legend-latin { height: 11.4px; fill: var(--white); filter: drop-shadow(0 0 1.2px var(--white)); overflow: visible; }
 .jm-legend-arabic { height: 22px; fill: var(--white); filter: drop-shadow(0 0 1.5px var(--white)); overflow: visible; }
 .jm-legend-art { height: 34px; overflow: visible; }
 .jm-legend-flag { height: 18px; filter: drop-shadow(0 0 2px rgba(238, 246, 248, 0.5)); }
-.jm-gwae { fill: none; stroke: var(--white); stroke-width: 4.6; filter: drop-shadow(0 0 1px var(--white)); }
+.jm-gwae { fill: var(--white); stroke: none; filter: drop-shadow(0 0 1.5px var(--white)); }
 .jm-tg-red { fill: var(--red); }
 .jm-tg-blue { fill: var(--blue-mid); }
 .jm-jamo { color: var(--amber); filter: drop-shadow(0 0 1.2px var(--amber)); }
