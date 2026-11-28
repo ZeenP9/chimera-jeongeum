@@ -1682,8 +1682,9 @@ button.primary.large {
 .jm-legend-text { font-size: 15px; font-family: "Jeongeum Hangul", system-ui, "Segoe UI", "Noto Sans", sans-serif; }
 .jm-legend-latin { height: 11.4px; fill: var(--white); filter: drop-shadow(0 0 1.2px var(--white)); overflow: visible; }
 .jm-legend-arabic { height: 22px; fill: var(--white); filter: drop-shadow(0 0 1.5px var(--white)); overflow: visible; }
-.jm-legend-art { height: 34px; overflow: visible; }
-.jm-legend-flag { height: 18px; filter: drop-shadow(0 0 2px rgba(238, 246, 248, 0.5)); }
+/* the 태극 runs into the unit line: centre it on the knobs' number-and-unit block, not on the number alone */
+.jm-legend-art { height: 34px; overflow: visible; position: relative; top: 5.5px; }
+.jm-legend-flag { height: 21.6px; filter: drop-shadow(0 0 2px rgba(238, 246, 248, 0.5)); }
 .jm-gwae { fill: var(--white); stroke: none; filter: drop-shadow(0 0 1.5px var(--white)); }
 .jm-tg-red { fill: var(--red); }
 .jm-tg-blue { fill: var(--blue-mid); }
