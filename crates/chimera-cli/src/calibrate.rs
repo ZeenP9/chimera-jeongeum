@@ -147,24 +147,35 @@ const FREE: &[&str] = &["o"];
 /// protruded 1.4, jaw 0.05); free it had the lips 0.21 cm² (0.27 x 1.0 cm).
 /// lipWidth = (cm / 0.9 - 1.1) / 3.3
 const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3), ("ʊ", (1.343, 4.98), 0.2727, 0.4)];
-/// fork: vowels held at a tongue place with every other pull lifted, the lips included (user,
-/// 2026-11-28): (vowel, tongue body (x, y), least area of the tract short of the lips (cm²), most
-/// lipWidth, most root). ɨ and ʉ are neither spread nor rounded in their own right (the bar through
-/// them), so their lips are free.
-/// ɨ: held at (2.73, 7.66) with the tract kept 0.20 cm² open it fits 359/1870 for 353/1874 (F2 125 Hz
-/// below where it was, 353/1999 with the dorsum 0.17 cm² apart): lips 0.59 x 3.96 cm, unprotruded,
-/// jaw 0.13, root 0.86, larynx -1.30.
-/// ʉ: held at (2.6, 7.55), lips at most 3.2 cm wide ((3.2 / 0.9 - 1.1) / 3.3), root at most 0.86, the
-/// tract kept 0.30 cm² open; it fits 405/1638 for 385/1659 (385/1784 before, rounded, the lips
-/// 0.32 cm² apart): tongue (2.63, 7.51), dorsum 0.29, lips 0.38 x 2.92 cm unprotruded, jaw 0.15,
-/// root 0.84, larynx -1.30. The F1 is as low as it comes with the dorsum kept that open.
 /// fork: vowels whose tongue body alone is held at a place the user chose, every other pull and
 /// limit of theirs kept (user, 2026-11-28): (vowel, tongue body (x, y)).
 /// y: held at (4.04, 7.7), 0.14 below where it fitted, with its F1 at 300 it fits 310/2338/2846 and
 /// stands 0.34 cm² off the palate (0.17 at 290/2337, where the frication noise is at its full).
 const TONGUE_HELD: &[(&str, (f64, f64))] = &[("y", (4.04, 7.7))];
-const HELD_FREE: &[(&str, (f64, f64), f64, Option<f64>, Option<f64>)] =
-    &[("ɨ", (2.73, 7.66), 0.20, None, None), ("ʉ", (2.6, 7.55), 0.30, Some(0.7441), Some(0.86))];
+/// fork: a vowel held at a tongue place with every other pull lifted, the lips included (user,
+/// 2026-11-28). ɨ and ʉ are neither spread nor rounded in their own right (the bar through them),
+/// so their lips are free within the widths given.
+#[derive(Clone, Copy)]
+struct HeldFree {
+    ipa: &'static str,
+    /// the tongue body, (x, y)
+    tongue: (f64, f64),
+    /// the least area of the tract short of the lips, cm²
+    least: f64,
+    /// lipWidth range, (cm / 0.9 - 1.1) / 3.3
+    width: (f64, f64),
+    root: (f64, f64),
+}
+/// ɨ: held at (2.73, 7.66) with the tract kept 0.20 cm² open it fits 359/1870 for 353/1874 (F2 125 Hz
+/// below where it was, 353/1999 with the dorsum 0.17 cm² apart): lips 0.59 x 3.96 cm, unprotruded,
+/// jaw 0.13, root 0.86, larynx -1.30.
+/// ʉ: held at (2.6, 7.52), lips 2.7 to 2.95 cm wide, root within ±0.7, the tract kept 0.28 cm² open;
+/// it fits 407/1560 for 385/1580 (385/1784 before, rounded, the lips 0.32 cm² apart): dorsum 0.28,
+/// lips 0.29 x 2.95 cm unprotruded, jaw 0.19, root 0.70, larynx -1.30.
+const HELD_FREE: &[HeldFree] = &[
+    HeldFree { ipa: "ɨ", tongue: (2.73, 7.66), least: 0.20, width: (0.0, 1.0), root: (-0.9, 0.9) },
+    HeldFree { ipa: "ʉ", tongue: (2.6, 7.52), least: 0.28, width: (0.5758, 0.6599), root: (-0.7, 0.7) },
+];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     // i: 0.4 lower than her take (7.96) since 2026-11-28 (user): with its F1 at 325 the tongue
     // stands 0.31 cm² off the hard palate (300 from her posture: 0.19, where the noise is at full)
@@ -418,18 +429,24 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 (x0[0], x0[1], x0[5]) = (hx, hy, hw);
                 x0[6] = js_min(x0[6], hr - 0.05);
             }
-            let held_free = if bname == "female" { HELD_FREE.iter().find(|h| h.0 == vw.ipa).copied() } else { None };
+            let held_free = if bname == "female" { HELD_FREE.iter().find(|h| h.ipa == vw.ipa).copied() } else { None };
             let tongue_held = if bname == "female" { TONGUE_HELD.iter().find(|h| h.0 == vw.ipa).map(|h| h.1) } else { None };
             if let Some((hx, hy)) = tongue_held {
                 (x0[0], x0[1]) = (hx, hy);
             }
-            if let Some((_, (hx, hy), _, wmax, rmax)) = held_free {
-                (x0[0], x0[1]) = (hx, hy);
-                if let Some(w) = wmax {
-                    x0[5] = js_min(x0[5], w - 0.05);
+            if let Some(h) = held_free {
+                (x0[0], x0[1]) = h.tongue;
+                if h.width.0 > 0.0 {
+                    x0[5] = js_max(x0[5], h.width.0 + 0.03);
                 }
-                if let Some(r) = rmax {
-                    x0[6] = js_min(x0[6], r - 0.05);
+                if h.width.1 < 1.0 {
+                    x0[5] = js_min(x0[5], h.width.1 - 0.03);
+                }
+                if h.root.1 < 0.9 {
+                    x0[6] = js_min(x0[6], h.root.1 - 0.05);
+                }
+                if h.root.0 > -0.9 {
+                    x0[6] = js_max(x0[6], h.root.0 + 0.05);
                 }
             }
             let jaw_prior = 0.2 + 1.5 * vw.height;
@@ -477,14 +494,12 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 if let Some((hx, hy)) = tongue_held {
                     c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0));
                 }
-                if let Some((_, (hx, hy), least, wmax, rmax)) = held_free {
+                if let Some(h) = held_free {
+                    let (hx, hy) = h.tongue;
+                    let least = h.least;
                     c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0));
-                    if let Some(w) = wmax {
-                        c += 50.0 * pow(js_max(0.0, p[5] - w), 2.0);
-                    }
-                    if let Some(r) = rmax {
-                        c += 50.0 * pow(js_max(0.0, p[6] - r), 2.0);
-                    }
+                    c += 50.0 * (pow(js_max(0.0, h.width.0 - p[5]), 2.0) + pow(js_max(0.0, p[5] - h.width.1), 2.0));
+                    c += 50.0 * (pow(js_max(0.0, h.root.0 - p[6]), 2.0) + pow(js_max(0.0, p[6] - h.root.1), 2.0));
                     // the tract's narrowest point short of the lips (the last three oral sections)
                     let n_or = air.or_min.len();
                     let narrowest = air.ph_min.iter().chain(air.or_min[..n_or - 3].iter()).cloned().filter(|x| *x > 0.0).fold(f64::INFINITY, js_min);
