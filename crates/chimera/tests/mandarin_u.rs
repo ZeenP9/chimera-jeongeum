@@ -42,10 +42,11 @@ fn english_and_ipa_text_still_sing_the_english_vowels() {
     let t = vowel_table();
     for body in ["male", "female", "child"] {
         if body == "female" {
-            // fork (正音): the female body's u is a back vowel set by the user (350/975). u̠ is the
+            // fork (正音): the female body's u is a back vowel set by the user (380/1040 since
+            // 2026-11-28, it sounds 379/1041; 350/975 before). u̠ is the
             // Mandarin contributor's again (user decision 2026-11-27; from 2026-11-24 it was u): further
             // back still, but no longer 20 % under it
-            assert!(t[body]["u"].formants[1] < 990.0, "female u is the cardinal back u: F2 {}", t[body]["u"].formants[1]);
+            assert!(t[body]["u"].formants[1] < 1060.0, "female u is the cardinal back u: F2 {}", t[body]["u"].formants[1]);
             assert!(t[body][BACK_U].formants[1] + 150.0 < t[body]["u"].formants[1], "female: u̠ F2 {} vs u {}", t[body][BACK_U].formants[1], t[body]["u"].formants[1]);
             continue;
         }

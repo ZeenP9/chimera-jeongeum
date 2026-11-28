@@ -165,6 +165,8 @@ struct HeldFree {
     tongue: (f64, f64),
     /// the least area of the tract short of the lips, cm²
     least: f64,
+    /// whether the lips count in that least area too
+    lips: bool,
     /// lipWidth range, (cm / 0.9 - 1.1) / 3.3
     width: (f64, f64),
     root: (f64, f64),
@@ -175,9 +177,14 @@ struct HeldFree {
 /// ʉ: held at (2.6, 7.52), lips 2.7 to 2.95 cm wide, root within ±0.7, the tract kept 0.28 cm² open;
 /// it fits 407/1560 for 385/1580 (385/1784 before, rounded, the lips 0.32 cm² apart): dorsum 0.28,
 /// lips 0.29 x 2.95 cm unprotruded, jaw 0.19, root 0.70, larynx -1.30.
+/// u: held at (2.55, 7.54), its rounding lifted, root no lower than -0.85, the whole tract (lips
+/// included) kept 0.18 cm² open; for 380/1040 it fits 379/1041/2489 (351/975 before with the
+/// dorsum 0.13 cm² apart): dorsum 0.19, lips 0.36 x 0.99 cm protruded 1.4 (it rounds them itself),
+/// jaw 1.27, root 0.90, larynx -1.07.
 const HELD_FREE: &[HeldFree] = &[
-    HeldFree { ipa: "ɨ", tongue: (2.73, 7.66), least: 0.20, width: (0.0, 1.0), root: (-0.9, 0.9) },
-    HeldFree { ipa: "ʉ", tongue: (2.6, 7.52), least: 0.28, width: (0.5758, 0.6599), root: (-0.7, 0.7) },
+    HeldFree { ipa: "ɨ", tongue: (2.73, 7.66), least: 0.20, lips: false, width: (0.0, 1.0), root: (-0.9, 0.9) },
+    HeldFree { ipa: "ʉ", tongue: (2.6, 7.52), least: 0.28, lips: false, width: (0.5758, 0.6599), root: (-0.7, 0.7) },
+    HeldFree { ipa: "u", tongue: (2.55, 7.54), least: 0.18, lips: true, width: (0.0, 1.0), root: (-0.85, 0.9) },
 ];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     // i: 0.4 lower than her take (7.96) since 2026-11-28 (user): with its F1 at 325 the tongue
@@ -267,7 +274,7 @@ const STARTS: &[(&str, &str, [f64; 9])] = &[
     // fork: ɤ starts from where it stood for 460/1120 (2026-11-26). From the generic guess it fitted
     // 516/1268 for 480/1260 (larynx -0.89), from here 486/1257
     ("ɤ", "female", [1.85, 7.229, 0.758, 0.389, 0.0, 0.547, 0.9, -0.449, 0.0]),
-    ("u", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.9, -1.231, 0.0]),
+    ("u", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.85, -1.231, 0.0]),
     ("u̠", "female", [2.223, 7.428, 1.642, 0.41, 1.4, 0.0, 0.9, -1.231, 0.0]),
 ];
 
@@ -511,7 +518,7 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     c += 50.0 * (pow(js_max(0.0, h.root.0 - p[6]), 2.0) + pow(js_max(0.0, p[6] - h.root.1), 2.0));
                     // the tract's narrowest point short of the lips (the last three oral sections)
                     let n_or = air.or_min.len();
-                    let narrowest = air.ph_min.iter().chain(air.or_min[..n_or - 3].iter()).cloned().filter(|x| *x > 0.0).fold(f64::INFINITY, js_min);
+                    let narrowest = air.ph_min.iter().chain(air.or_min[..if h.lips { n_or } else { n_or - 3 }].iter()).cloned().filter(|x| *x > 0.0).fold(f64::INFINITY, js_min);
                     return c + 50.0 * pow(js_max(0.0, (least - narrowest) / least), 2.0) + 0.5 * p[8] * p[8];
                 }
                 // fork: ɒ uses everything the body has (user, 2026-11-26): no pull toward a jaw, a
@@ -529,6 +536,7 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 if bname == "female" && vw.ipa == "ɯ" {
                     return c + 0.5 * p[8] * p[8] + 2.0 * (p[4] * p[4] + pow(js_max(0.0, 0.55 - p[5]), 2.0)) + 5.0 * pow(js_max(0.0, 0.278 - p[3]), 2.0);
                 }
+                // (u is held free since 2026-11-28, HELD_FREE, and no longer reaches this branch)
                 // fork: u stays rounded (user, 2026-11-27; u̠ is upstream's again and its table entry is not refitted): protruded 0.6 at
                 // least, lips no wider than a close rounded vowel's and 0.27 cm apart at least
                 // (BECK_LIP_AP_ROUND); the jaw, root, larynx and tongue pulls stay lifted
