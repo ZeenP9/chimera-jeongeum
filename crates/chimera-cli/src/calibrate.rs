@@ -134,6 +134,19 @@ const LIP_AP_RAMS_HORN: f64 = 0.389;
 const LIP_AP_RAMS_HORN_LOWERED: f64 = 0.5;
 /// fork: the female vowels fitted with every pull lifted (user, 2026-11-27): see the cost
 const FREE: &[&str] = &["o"];
+/// fork: vowels whose tongue body is held at a place the user chose, with their lips' width and a
+/// ceiling on the root (user, 2026-11-28): (vowel, tongue body (x, y), lipWidth, most root).
+/// The aim was to open the narrowest point of the tract, which the free fits had squeezed below
+/// 0.28 cm² (where the narrowest point's frication noise is at its full).
+/// o: fitted free it sat with the back of the tongue against the soft palate (0.12 cm² there);
+/// at (1.4, 5.5), root 0.3 at most, lips 1.2 cm wide, it fits 482/1014 for 480/1010 with the
+/// narrowest point the lips' 0.41 cm² (pharynx 0.43; lips 0.43 x 1.2 cm, protruded 0.93, jaw 0.05,
+/// larynx -0.64).
+/// ʊ: at (1.343, 4.98), root 0.4 at most, lips 1.8 cm wide, it fits 444/1038 for 420/1040 (F1 the
+/// nearest it comes from there) with the pharynx 0.31 cm² and the lips 0.38 (0.27 x 1.8 cm,
+/// protruded 1.4, jaw 0.05); free it had the lips 0.21 cm² (0.27 x 1.0 cm).
+/// lipWidth = (cm / 0.9 - 1.1) / 3.3
+const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3), ("ʊ", (1.343, 4.98), 0.2727, 0.4)];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("i", 4.01, 7.96),
     ("e", 3.71, 7.71),
@@ -379,6 +392,12 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
             if let Some((_, _, p)) = STARTS.iter().find(|(v, b, _)| *v == vw.ipa && *b == bname) {
                 x0 = p.to_vec();
             }
+            // fork: a held vowel (HELD) starts where it is held, within its root and lip limits
+            let held = if bname == "female" { HELD.iter().find(|h| h.0 == vw.ipa).copied() } else { None };
+            if let Some((_, (hx, hy), hw, hr)) = held {
+                (x0[0], x0[1], x0[5]) = (hx, hy, hw);
+                x0[6] = js_min(x0[6], hr - 0.05);
+            }
             let jaw_prior = 0.2 + 1.5 * vw.height;
             let pinned = apical(vw.ipa, bname, i_lips);
             // the apical vowels' tongue body and jaw are held a little nearer the vowel-space guess
@@ -415,6 +434,11 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 let min_ok = 0.22 * k * k;
                 if min_area < min_ok {
                     c += 0.4 * pow((min_ok - min_area) / min_ok, 2.0);
+                }
+                if let Some((_, (hx, hy), hw, hr)) = held {
+                    c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0))
+                        + 50.0 * pow(p[5] - hw, 2.0)
+                        + 50.0 * pow(js_max(0.0, p[6] - hr), 2.0);
                 }
                 // fork: ɒ uses everything the body has (user, 2026-11-26): no pull toward a jaw, a
                 // lip height, a root, a larynx or a tongue place, only its formants and its rounding
