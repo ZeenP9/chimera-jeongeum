@@ -1672,6 +1672,18 @@ button.primary.large {
 .jm-signs { pointer-events: none; }
 .jm-stroke { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
 .jm-fill { fill: currentColor; }
+.jm-stroke.sq { stroke-linecap: butt; stroke-linejoin: miter; }
+.jm-arc { fill: none; stroke: var(--slot); stroke-width: 2; pointer-events: none; filter: drop-shadow(0 0 2px var(--slot)); }
+/* the legend under the switch, where the knobs beside it show their numbers */
+.jm-legend { display: grid; place-items: center; height: 30px; line-height: 1; white-space: nowrap; }
+.jm-legend-text { font-size: 15px; font-family: "Jeongeum Hangul", system-ui, "Segoe UI", "Noto Sans", sans-serif; }
+.jm-legend-word { font-size: 14px; letter-spacing: 0.1em; }
+.jm-legend-arabic { height: 22px; fill: var(--white); filter: drop-shadow(0 0 1.5px var(--white)); overflow: visible; }
+.jm-legend-art { height: 34px; overflow: visible; }
+.jm-legend-flag { height: 18px; filter: drop-shadow(0 0 2px rgba(238, 246, 248, 0.5)); }
+.jm-gwae { fill: none; stroke: var(--white); stroke-width: 4.6; filter: drop-shadow(0 0 1px var(--white)); }
+.jm-tg-red { fill: var(--red); }
+.jm-tg-blue { fill: var(--blue-mid); }
 .jm-jamo { color: var(--amber); filter: drop-shadow(0 0 1.2px var(--amber)); }
 .jm-dot { fill: var(--red); filter: drop-shadow(0 0 1.5px var(--red)); }
 /* an unlit legend is all but gone; lit, it glows */

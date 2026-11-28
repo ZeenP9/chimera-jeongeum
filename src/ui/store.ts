@@ -93,7 +93,7 @@ interface State {
   roomDecay: number;
   setRoomShape: (shape: { roomSize?: number; roomDecay?: number }) => void;
   /**
-   * 正音: Mood 페이지의 네 조각 스위치 (ㅣ→ɨ, ㆍ→○, ㅡ→ḥ, ㆆ→ʕ). 정음 기호가 IPA 보다 적어 겹치는 읽기를 고르는 미세
+   * 正音: Mood 페이지의 네 조각 스위치 (ㅣ→ɨ, ㆍ→○, ㅡ→ḥ, ㆆ→ع). 정음 기호가 IPA 보다 적어 겹치는 읽기를 고르는 미세
    * 조정으로, 모두 꺼진 것이 기본이다. 지금은 ㅣ→ɨ 만 엔진에 알린다 (`setJeongeumMarks`); 나머지 셋은 기능이 정해지지
    * 않아 켜고 끈 상태만 간직한다.
    */
@@ -369,8 +369,10 @@ export const useStore = create<State>((set, get) => ({
   toggleMark: (k) => {
     set((s) => ({ marks: { ...s.marks, [k]: !s.marks[k] } }));
     const m = get().marks;
-    // ㅣ → ɨ (1) and ㅡ → ḥ (2) reach the engine; the other two slices keep their place and light, no more
-    setJeongeumMarks((m.i ? 1 : 0) | (m.eu ? 2 : 0));
+    // ㅣ → ɨ (1) and ㅡ → ḥ (2) reach the engine; the other two slices keep their place and light, no more.
+    // 왼쪽 + 오른쪽을 함께 켜면 두 기능이 겹치는 것이 아니라 프랑스어 읽기라는 별개의 모드다 (사용자 지정 2026-11-28).
+    // 그 모드의 규칙은 아직 정해지지 않아, 그동안은 기본(중립) 읽기로 둔다.
+    setJeongeumMarks(m.i && m.eu ? 0 : (m.i ? 1 : 0) | (m.eu ? 2 : 0));
   },
   setRoomShape: (shape) => {
     set(shape);
