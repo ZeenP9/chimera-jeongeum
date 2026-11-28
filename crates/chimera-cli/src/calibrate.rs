@@ -147,11 +147,14 @@ const FREE: &[&str] = &["o"];
 /// protruded 1.4, jaw 0.05); free it had the lips 0.21 cm² (0.27 x 1.0 cm).
 /// lipWidth = (cm / 0.9 - 1.1) / 3.3
 const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3), ("ʊ", (1.343, 4.98), 0.2727, 0.4)];
-/// fork: vowels whose tongue body alone is held at a place the user chose, every other pull and
-/// limit of theirs kept (user, 2026-11-28): (vowel, tongue body (x, y)).
+/// fork: vowels whose tongue body is held at a place the user chose, every other pull and limit of
+/// theirs kept (user, 2026-11-28): (vowel, tongue body (x, y), most |root| or None).
 /// y: held at (4.04, 7.7), 0.14 below where it fitted, with its F1 at 300 it fits 310/2338/2846 and
 /// stands 0.34 cm² off the palate (0.17 at 290/2337, where the frication noise is at its full).
-const TONGUE_HELD: &[(&str, (f64, f64))] = &[("y", (4.04, 7.7))];
+/// ɤ: held at (1.98, 7.25), 0.07 forward of where it fitted, its root within ±0.85; for 477/1306 it
+/// fits 490/1299 with the root at 0.81 (0.90, the limit, before) and the dorsum 0.20 cm² open
+/// (0.16 before): lips 0.35 x 3.43 cm, jaw 0.49, larynx -0.41.
+const TONGUE_HELD: &[(&str, (f64, f64), Option<f64>)] = &[("y", (4.04, 7.7), None), ("ɤ", (1.98, 7.25), Some(0.85))];
 /// fork: a vowel held at a tongue place with every other pull lifted, the lips included (user,
 /// 2026-11-28). ɨ and ʉ are neither spread nor rounded in their own right (the bar through them),
 /// so their lips are free within the widths given.
@@ -430,9 +433,12 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 x0[6] = js_min(x0[6], hr - 0.05);
             }
             let held_free = if bname == "female" { HELD_FREE.iter().find(|h| h.ipa == vw.ipa).copied() } else { None };
-            let tongue_held = if bname == "female" { TONGUE_HELD.iter().find(|h| h.0 == vw.ipa).map(|h| h.1) } else { None };
-            if let Some((hx, hy)) = tongue_held {
+            let tongue_held = if bname == "female" { TONGUE_HELD.iter().find(|h| h.0 == vw.ipa).map(|h| (h.1, h.2)) } else { None };
+            if let Some(((hx, hy), root)) = tongue_held {
                 (x0[0], x0[1]) = (hx, hy);
+                if let Some(r) = root {
+                    x0[6] = x0[6].clamp(-r + 0.05, r - 0.05);
+                }
             }
             if let Some(h) = held_free {
                 (x0[0], x0[1]) = h.tongue;
@@ -491,8 +497,11 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                         + 50.0 * pow(p[5] - hw, 2.0)
                         + 50.0 * pow(js_max(0.0, p[6] - hr), 2.0);
                 }
-                if let Some((hx, hy)) = tongue_held {
+                if let Some(((hx, hy), root)) = tongue_held {
                     c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0));
+                    if let Some(r) = root {
+                        c += 50.0 * pow(js_max(0.0, p[6].abs() - r), 2.0);
+                    }
                 }
                 if let Some(h) = held_free {
                     let (hx, hy) = h.tongue;
