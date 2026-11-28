@@ -147,6 +147,13 @@ const FREE: &[&str] = &["o"];
 /// protruded 1.4, jaw 0.05); free it had the lips 0.21 cm² (0.27 x 1.0 cm).
 /// lipWidth = (cm / 0.9 - 1.1) / 3.3
 const HELD: &[(&str, (f64, f64), f64, f64)] = &[("o", (1.4, 5.5), 0.0707, 0.3), ("ʊ", (1.343, 4.98), 0.2727, 0.4)];
+/// fork: vowels held at a tongue place with every other pull lifted, the lips included (user,
+/// 2026-11-28): (vowel, tongue body (x, y), least area of the tract short of the lips, cm²).
+/// ɨ is neither spread nor rounded in its own right (the bar through it), so its lips are free.
+/// Held at (2.73, 7.66) with the tract kept 0.20 cm² open it fits 359/1870 for 353/1874 (F2 125 Hz
+/// below where it was, 353/1999 with the dorsum 0.17 cm² apart): lips 0.59 x 3.96 cm, unprotruded,
+/// jaw 0.13, root 0.86, larynx -1.30.
+const HELD_FREE: &[(&str, (f64, f64), f64)] = &[("ɨ", (2.73, 7.66), 0.20)];
 const BECK_TONGUE: &[(&str, f64, f64)] = &[
     ("i", 4.01, 7.96),
     ("e", 3.71, 7.71),
@@ -398,6 +405,10 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                 (x0[0], x0[1], x0[5]) = (hx, hy, hw);
                 x0[6] = js_min(x0[6], hr - 0.05);
             }
+            let held_free = if bname == "female" { HELD_FREE.iter().find(|h| h.0 == vw.ipa).copied() } else { None };
+            if let Some((_, (hx, hy), _)) = held_free {
+                (x0[0], x0[1]) = (hx, hy);
+            }
             let jaw_prior = 0.2 + 1.5 * vw.height;
             let pinned = apical(vw.ipa, bname, i_lips);
             // the apical vowels' tongue body and jaw are held a little nearer the vowel-space guess
@@ -439,6 +450,14 @@ pub fn vowels(a: &[String]) -> Result<(), String> {
                     c += 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0))
                         + 50.0 * pow(p[5] - hw, 2.0)
                         + 50.0 * pow(js_max(0.0, p[6] - hr), 2.0);
+                }
+                if let Some((_, (hx, hy), least)) = held_free {
+                    // the tract's narrowest point short of the lips (the last three oral sections)
+                    let n_or = air.or_min.len();
+                    let narrowest = air.ph_min.iter().chain(air.or_min[..n_or - 3].iter()).cloned().filter(|x| *x > 0.0).fold(f64::INFINITY, js_min);
+                    return c + 200.0 * (pow(p[0] - hx, 2.0) + pow(p[1] - hy, 2.0))
+                        + 50.0 * pow(js_max(0.0, (least - narrowest) / least), 2.0)
+                        + 0.5 * p[8] * p[8];
                 }
                 // fork: ɒ uses everything the body has (user, 2026-11-26): no pull toward a jaw, a
                 // lip height, a root, a larynx or a tongue place, only its formants and its rounding

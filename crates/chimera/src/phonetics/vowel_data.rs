@@ -75,7 +75,7 @@ pub static VOWELS: &[VowelRef] = &[
     vref("y", "cardinal 9: 290/2300 set by the user 2026-11-26, lips 0.45 cm apart and 1.5 cm wide at least (calibrate.rs, LIP_FLOORS; J. Beck 230/2290)", [300.0, 1800.0, 2150.0], Some([290.0, 2300.0, 2685.0]), None, true, 0.0, 0.05),
     vref("ø", "410/2180 set by the user 2026-11-27, tongue freed (before it 390/2230); cardinal 10: 390/2230 set by the user 2026-11-26 (J. Beck 400/2260)", [390.0, 1550.0, 2250.0], Some([410.0, 2180.0, 2770.0]), None, true, 0.33, 0.05),
     vref("œ", "cardinal 11, J. Beck", [520.0, 1450.0, 2350.0], Some([555.0, 1830.0, 2855.0]), None, true, 0.66, 0.05),
-    vref("ɨ", "close central unrounded: F1 F2 set by the user 2026-11-24 (J. Beck measured 345 / 2110), F3 Beck", [330.0, 1600.0, 2400.0], Some([340.0, 1985.0, 2350.0]), None, false, 0.0, 0.5),
+    vref("ɨ", "353/1874 set by the user 2026-11-28 (F2 125 Hz lower; tongue held at (2.73, 7.66), lips free, calibrate.rs HELD_FREE); close central unrounded: F1 F2 set by the user 2026-11-24 (J. Beck measured 345 / 2110), F3 Beck", [330.0, 1600.0, 2400.0], Some([353.0, 1874.0, 2350.0]), None, false, 0.0, 0.5),
     vref("ɯ", "355/1310 set by the user 2026-11-27 (before it 375/1250); cardinal 16: 375/1250 set by the user 2026-11-26, (400/1200 the day before, 380 / 1160 before that; J. Beck measured 390 / 1460), F3 Beck", [340.0, 1350.0, 2400.0], Some([355.0, 1310.0, 2560.0]), None, false, 0.0, 1.0),
     vref("ɤ", "460/1320 set by the user 2026-11-27 (before it 480/1260); cardinal 15: 480/1260 set by the user 2026-11-26 (460/1120 the day before; J. Beck measured 435 / 1090), F3 Beck", [460.0, 1250.0, 2450.0], Some([460.0, 1320.0, 2505.0]), None, false, 0.33, 1.0),
     // Mandarin's apical vowels: the -i of 四 si (after z c s) and of 是 shi (after zh ch sh r), the
@@ -102,7 +102,7 @@ pub static VOWELS: &[VowelRef] = &[
     // fork (正音): symbols upstream lacked, from J. Beck's cardinal vowels (see the module note)
     vref("ʉ", "close central rounded, J. Beck", [342.0, 1462.0, 1839.0], Some([400.0, 1745.0, 2135.0]), None, true, 0.0, 0.5),
     vref("ʏ", "F1 F2 set by the user 2026-11-25 (was the y–ø midpoint computed from J. Beck, 315/2275)", [360.0, 1633.0, 2217.0], Some([350.0, 2150.0, 2730.0]), None, true, 0.15, 0.1),
-    vref("ɘ", "ɨ–ə midpoint (computed; the central four stand around ə, user 2026-11-24), of their fitted formants since 2026-11-26 (ɨ 353/1999, ə 525/1603)", [468.0, 1670.0, 2570.0], Some([439.0, 1801.0, 2520.0]), None, false, 0.33, 0.5),
+    vref("ɘ", "ɨ–ə midpoint (computed; the central four stand around ə, user 2026-11-24), of their fitted formants since 2026-11-26 (recomputed 2026-11-28 for ɨ 359/1870, ə 525/1603; 439/1801 before, for ɨ 353/1999)", [468.0, 1670.0, 2570.0], Some([442.0, 1737.0, 2520.0]), None, false, 0.33, 0.5),
     vref("ɵ", "ʉ–ə midpoint (computed), of their fitted formants since 2026-11-26 (ʉ 385/1784, ə 525/1603)", [444.0, 1230.0, 2355.0], Some([455.0, 1693.5, 2415.0]), None, true, 0.33, 0.5),
     vref("ɜ", "ə–ɐ midpoint (computed), of their fitted formants since 2026-11-26 (ə 525/1603, ɐ 689/1581)", [602.0, 1500.0, 2578.0], Some([607.0, 1592.0, 2850.0]), None, false, 0.66, 0.5),
     vref("ɞ", "a quarter of the way from ə to the ɶ–ɒ midpoint, as ɜ is to ä (computed), of their fitted formants since 2026-11-26 (ə 525/1603, ɶ 791/1476, ɒ 739/1029)", [586.0, 1224.0, 2444.0], Some([585.0, 1515.0, 2740.0]), None, true, 0.66, 0.5),
