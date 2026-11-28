@@ -5,6 +5,10 @@ airway (lungs, vocal folds or syrinx, a branched vocal tract, lips, nose), not f
 The engine is Rust, compiled to WebAssembly for an AudioWorklet; the same code runs natively
 for tests and the `chimera` CLI.
 
+**Jeongeum CHIMERA (this fork), live in the browser: https://zeenp9.github.io/chimera-jeongeum/**
+It adds a front end that reads Hunminjeongeum (正音) spelling. The original is
+[jamesondh/chimera-vocal-synth](https://github.com/jamesondh/chimera-vocal-synth).
+
 ## Vision & scope
 
 1. **One instrument**: a physically modeled voice (lungs, vocal folds, throat, mouth). No
