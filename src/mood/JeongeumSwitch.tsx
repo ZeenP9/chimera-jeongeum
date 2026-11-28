@@ -1,12 +1,12 @@
-import { V } from "../colors.ts";
-import { useStore } from "../store.ts";
+import "./mood.css";
+import { useMood, type Slice } from "./store.ts";
 import { JeongeumLegend } from "./JeongeumLegend.tsx";
 
 const R = 30;
 const D = R * Math.SQRT1_2;
 /** the X stops this far (along each axis) short of the centre, so the 正音 cross is not crowded */
 const G = 5 * Math.SQRT1_2;
-type Key = "i" | "arae" | "eu" | "hieut";
+type Key = Slice;
 
 /** The four slices of the circle cut by an X: left, top, right, bottom. */
 const SLICES: { key: Key; name: string; d: string; arc: string }[] = [
@@ -54,11 +54,11 @@ function Sign(props: { ch: string; x: number; y: number; scale?: number; turn?: 
  * 테두리는 Ring 노브처럼 흰색.
  */
 export function JeongeumSwitch() {
-  const marks = useStore((s) => s.marks);
-  const toggle = useStore((s) => s.toggleMark);
+  const marks = useMood((s) => s.marks);
+  const toggle = useMood((s) => s.toggleMark);
   const on = (k: Key) => (marks[k] ? " on" : "");
   return (
-    <div className="encoder jm-switch" style={{ "--slot": V.white } as React.CSSProperties}>
+    <div className="encoder jm-switch" style={{ "--slot": "var(--white)" } as React.CSSProperties}>
       <span className="enc-label">正音</span>
       <div className="jm-dial">
         <svg viewBox="-42 -42 84 84" role="group" aria-label="正音 readings">

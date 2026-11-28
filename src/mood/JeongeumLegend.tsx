@@ -1,4 +1,4 @@
-import { useStore } from "../store.ts";
+import { useMood } from "./store.ts";
 
 /**
  * 正音 스위치 아래의 표시 칸 (옆 노브들이 수치를 보여 주는 자리). 켜진 조각의 조합에 따라 글이나 그림을 보여 준다
@@ -69,7 +69,7 @@ function Tricolore() {
 }
 
 export function JeongeumLegend() {
-  const m = useStore((s) => s.marks);
+  const m = useMood((s) => s.marks);
   let value: React.ReactNode = "\u00a0";
   // 아래(아랍) 조각은 다른 조각이 함께 켜져도 먼저 보이고, 위(태극) 조각은 다른 조각이 켜지면 물러난다
   if (m.hieut)

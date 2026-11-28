@@ -1,7 +1,8 @@
-import { roomDecaySeconds } from "../../audio/AudioEngine.ts";
-import { inPlugin } from "../../audio/pluginBridge.ts";
-import { useStore } from "../store.ts";
-import type { EncoderPage } from "./Encoder.tsx";
+// the host's knob-row page type: the box fills one page of the host's encoders (src/mood/README.md)
+import type { EncoderPage } from "../ui/components/Encoder.tsx";
+import { moodHost } from "./host.ts";
+import { roomDecaySeconds } from "./room.ts";
+import { useMood } from "./store.ts";
 import { JeongeumSwitch } from "./JeongeumSwitch.tsx";
 
 /**
@@ -12,12 +13,12 @@ import { JeongeumSwitch } from "./JeongeumSwitch.tsx";
  * the host adds its own room.
  */
 export function useMoodPage(): EncoderPage[] {
-  const room = useStore((s) => s.room);
-  const size = useStore((s) => s.roomSize);
-  const decay = useStore((s) => s.roomDecay);
-  const setRoom = useStore((s) => s.setRoom);
-  const setRoomShape = useStore((s) => s.setRoomShape);
-  if (inPlugin) return [];
+  const room = useMood((s) => s.room);
+  const size = useMood((s) => s.roomSize);
+  const decay = useMood((s) => s.roomDecay);
+  const setRoom = useMood((s) => s.setRoom);
+  const setRoomShape = useMood((s) => s.setRoomShape);
+  if (moodHost().inPlugin) return [];
   return [
     {
       name: "Mood",

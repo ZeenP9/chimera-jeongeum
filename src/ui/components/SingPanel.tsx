@@ -1,4 +1,4 @@
-import { useMoodPage } from "./moodPage.tsx";
+import { useMoodPage } from "../../mood/MoodPage.tsx";
 import { useEffect, useRef, useState } from "react";
 import { inPlugin } from "../../audio/pluginBridge.ts";
 import { useStore } from "../store.ts";

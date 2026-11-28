@@ -1,4 +1,4 @@
-"""正音: the 태극 legend's 괘 bars (GWAE in src/ui/components/JeongeumLegend.tsx).
+"""正音: the 태극 legend's 괘 bars (GWAE in src/mood/JeongeumLegend.tsx).
 
 Draws the four 괘 as interlocking bars in a 235-unit square (the layout of the reference the user gave,
 2026-11-28), cuts them with the clear ring round the 태극, grinds away what the ring leaves thin (a
