@@ -99,6 +99,14 @@ bun tools/spectrogram.ts in.wav out.png
 bun tools/musicxml-to-notes.ts score.mxl P1 --out p1.json   # a score's part → `render notes` melody
 ```
 
+## Female vowels (Jeongeum fork)
+
+The female body's vowels as they sound (F1/F2, measured from the fitted postures), each with the
+narrowest point of its vocal tract where that is 0.55 cm² or less. That point makes the frication
+noise: for this body it fades in below 0.73 cm² and is at full strength below 0.28 cm².
+
+![Female vowel chart with the narrowest point of the vocal tract](docs/female_vowels_narrowest.svg)
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): the acoustic model (FDTD airway, sources,
