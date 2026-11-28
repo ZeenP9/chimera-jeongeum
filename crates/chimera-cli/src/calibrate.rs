@@ -111,7 +111,7 @@ const LIP_FLOORS: &[(&str, f64, f64)] = &[("y", 0.5, 0.172), ("ɯ", 0.278, 0.0),
 const OE_LOWERED_WIDTH: f64 = 0.2222;
 /// and protruded 0.3 (user, 2026-11-26); its lip height is free
 const OE_LOWERED_PROT: f64 = 0.3;
-const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("ʉ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
+const BECK_LIP_AP_ROUND: &[(&str, f64)] = &[("y", 0.3), ("ʏ", 0.3), ("œ", 0.72), ("u", 0.3), ("u̠", 0.3), ("ɔ", 1.17), ("ɔ̞", 1.13), ("ɒ", 1.09)];
 /// the prior's weight on the lips' distance from it: the tongue's (W_BECK)
 const W_BECK_LIP: f64 = 0.15;
 /// the share of her opening the model takes (user, 2026-11-25): she lay down and held each cardinal
@@ -217,7 +217,6 @@ const BECK_TONGUE: &[(&str, f64, f64)] = &[
     // the way in and out of it (안녕: a ping at each edge of 녕). Free, it fits 602/1049 with the
     // tongue at (1.13, 6.60), and the sweep from 4.5 kHz is gone
     ("ɤ", 2.02, 6.84),
-    ("ʉ", 3.71, 7.88),
     // not ɪ (user, 2026-11-27): held, it stopped at 406 Hz for 385. Free, /ŋ/ after it closes a little
     // early and nasal_spans fails by under a millisecond (female median -7.65 ms, limit 7), which
     // the user accepts
